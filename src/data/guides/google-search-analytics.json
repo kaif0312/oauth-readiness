@@ -3,13 +3,13 @@
   "app": "Google (Search Console, GA4, Business Profile)",
   "website": "https://developers.google.com/webmaster-tools",
   "category": "Marketing analytics",
-  "summary": "Moderate. You can be reading your own Search Console and GA4 data within about 30 minutes in Testing mode. Clinic accounts need sensitive-scope verification first: free, about 1-3 weeks, with no CASA. Business Profile is a separate gate: its APIs return nothing (0 requests/minute quota) until Google approves a separate API access request. Request it first. The current catches are 7-day test tokens, gcloud's built-in client being blocked, and a 2026 classification bug for business.manage.",
+  "summary": "Moderate. You can be reading your own Search Console, GA4 and Business Profile data within about 30 minutes in Testing mode (we did it end to end for Iskaria). Only analytics.readonly is sensitive and needs verification (free, about 1-3 weeks, no CASA); business.manage and webmasters.readonly are non-sensitive. Business Profile is a separate gate: its APIs return nothing (0 requests/minute quota) until Google approves a separate API access request, so request it first. Catches: 7-day test tokens, gcloud's built-in client is blocked, and the support email must be your own account or a Google Group you manage.",
   "verdict": {
     "difficulty": "moderate",
     "timeToFirstToken": "30 min",
     "timeToLaunch": "1-3 weeks",
-    "launchNote": "1-3 weeks for Search Console + GA4. Business Profile adds an access request that takes days to weeks; run it in parallel.",
-    "reviewRequired": "Brand verification (minutes if automated, 2-3 business days if manual), then sensitive-scope verification (up to about 10 days) for webmasters.readonly and analytics.readonly. Business Profile also needs Google's separate API access approval. No security assessment.",
+    "launchNote": "1-3 weeks if you need GA4 (sensitive). Search Console + Business Profile alone are non-sensitive: brand verification only, once Business Profile API access is approved.",
+    "reviewRequired": "Brand verification (minutes if automated, 2-3 business days if manual), then sensitive-scope verification (up to about 10 days) for analytics.readonly only. business.manage and webmasters.readonly are non-sensitive. Business Profile also needs Google's separate API access approval. No security assessment.",
     "cost": "Free",
     "evidence": {
       "status": "sourced",
@@ -150,7 +150,7 @@
       "title": "Fill in Branding in Google Auth Platform",
       "who": "agent-then-you",
       "phase": "build",
-      "detail": "In Cloud Console, open Menu > Google Auth Platform > Branding, the old 'OAuth consent screen'. Enter the app name (matching the homepage), support email, logo, homepage, privacy policy, terms, authorized domains and developer contact.",
+      "detail": "In Cloud Console, open Menu > Google Auth Platform > Branding, the old 'OAuth consent screen'. Enter the app name (matching the homepage), support email, logo, homepage, privacy policy, terms, authorized domains and developer contact. The User support email dropdown only offers the signed-in account and Google Groups it manages: to show a company address, make it a Group first. Unsaved changes are lost if you leave the page.",
       "url": "https://console.cloud.google.com/auth/branding",
       "estimate": "10 min",
       "fields": [
@@ -160,7 +160,8 @@
         },
         {
           "label": "User support email",
-          "profileKey": "supportEmail"
+          "profileKey": "supportEmail",
+          "note": "Must be the signed-in account or a Google Group it manages."
         },
         {
           "label": "App logo",
@@ -191,9 +192,9 @@
       "evidence": {
         "status": "tested",
         "sourceIds": [
-          "s1",
-          "s6"
-        ]
+          "s15"
+        ],
+        "note": "Filled by the setup agent from the profile in the owner's signed-in Chrome; the owner clicked Save."
       }
     },
     {
@@ -215,23 +216,22 @@
       "title": "Declare the scopes under Data Access",
       "who": "agent-then-you",
       "phase": "build",
-      "detail": "Add webmasters.readonly, analytics.readonly and business.manage (plus openid/email if you identify the user). Read the tier the console shows next to each scope. In 2026, several developers saw business.manage listed as non-sensitive while the consent screen still blocked external users.",
+      "detail": "Add or remove scopes: tick openid and userinfo.email, paste business.manage, webmasters.readonly and analytics.readonly under 'Manually add scopes', Add to table, Update, Save. The console then sorts them: business.manage and webmasters.readonly non-sensitive, analytics.readonly sensitive (2026-10-30).",
       "url": "https://console.cloud.google.com/auth/scopes",
       "estimate": "5 min",
       "evidence": {
-        "status": "inferred",
+        "status": "tested",
         "sourceIds": [
-          "s8",
-          "s9",
-          "s10"
-        ]
+          "s15"
+        ],
+        "note": "Done by the setup agent for Iskaria; tiers read from the console."
       }
     },
     {
       "title": "Create your own OAuth client",
       "who": "agent-then-you",
       "phase": "build",
-      "detail": "Under Clients, create a 'Web application' client for the console (redirect URIs below). A 'Desktop' client is fine for local scripts that use a loopback redirect. Do not rely on gcloud's built-in client (`gcloud auth application-default login`): Google shows 'This app is blocked' for these scopes.",
+      "detail": "Under Clients, create a 'Web application' client for the console (redirect URIs below). A 'Desktop' client is fine for local scripts that use a loopback redirect. Do not rely on gcloud's built-in client (`gcloud auth application-default login`): Google shows 'This app is blocked' for these scopes. New in 2026: a 'Use this client for an AI-powered agent' checkbox. Google's help: tick it for clients used by AI agents acting on users' behalf (e.g. Google MCP tools), and use separate clients if the app has both agent and normal user features. The client secret is shown once: Download JSON.",
       "url": "https://console.cloud.google.com/auth/clients",
       "estimate": "5 min",
       "fields": [
@@ -244,8 +244,9 @@
       "evidence": {
         "status": "tested",
         "sourceIds": [
-          "s1"
-        ]
+          "s15"
+        ],
+        "note": "Web client created for Iskaria with the profile's redirect URIs; secret saved from the one-time JSON download."
       }
     },
     {
@@ -257,9 +258,9 @@
       "evidence": {
         "status": "tested",
         "sourceIds": [
-          "s1",
-          "s2"
-        ]
+          "s15"
+        ],
+        "note": "Connect Google in the Iskaria console (localhost): PKCE web flow, then live reads of Business Profile accounts + locations, 5 Search Console sites, 3 GA4 properties."
       }
     },
     {
@@ -324,15 +325,15 @@
     {
       "name": "https://www.googleapis.com/auth/webmasters.readonly",
       "purpose": "Read Search Console performance (queries, pages, clicks) for the clinic's site",
-      "tier": "sensitive",
+      "tier": "basic",
       "evidence": {
         "status": "tested",
         "sourceIds": [
-          "s1",
-          "s12"
+          "s15"
         ],
-        "note": "Iskaria got the unverified-app warning with this scope. That warning appears only for sensitive or restricted scopes. Not restricted: Google's restricted lists cover Gmail, Drive, Fit, Chat and similar."
-      }
+        "note": "Google Auth Platform > Data Access lists it under 'Your non-sensitive scopes' (Iskaria, 2026-10-30). Earlier we assumed sensitive from the unverified-app warning; that warning came from analytics.readonly."
+      },
+      "note": "Non-sensitive per the console on 2026-10-30."
     },
     {
       "name": "https://www.googleapis.com/auth/analytics.readonly",
@@ -341,23 +342,22 @@
       "evidence": {
         "status": "tested",
         "sourceIds": [
-          "s1",
-          "s9",
-          "s12"
-        ]
+          "s15"
+        ],
+        "note": "Listed under 'Your sensitive scopes' in Data Access (Iskaria, 2026-10-30). The only scope here that needs verification."
       }
     },
     {
       "name": "https://www.googleapis.com/auth/business.manage",
       "purpose": "Read the clinic's Business Profile locations, reviews and performance, and reply to reviews",
-      "tier": "sensitive",
-      "note": "Classification is unclear. Unified.to calls it sensitive. A 2026 Google forum thread reports the console listing it as non-sensitive while external users are still blocked with 403 access_denied. Check your own Data Access page.",
+      "tier": "basic",
+      "note": "Non-sensitive in the console, but Business Profile still needs Google's separate API access approval (0 QPM until then).",
       "evidence": {
-        "status": "inferred",
+        "status": "tested",
         "sourceIds": [
-          "s8",
-          "s10"
-        ]
+          "s15"
+        ],
+        "note": "Listed under 'Your non-sensitive scopes' in Data Access (Iskaria, 2026-10-30), matching the 2026 forum reports."
       }
     },
     {
@@ -446,6 +446,19 @@
           "s3",
           "s4"
         ]
+      }
+    },
+    {
+      "title": "Separate OAuth clients for AI agents",
+      "detail": "Since 2026 Google's client form has 'Use this client for an AI-powered agent'. Google asks for a separate client when an app has both agent workflows (e.g. Google MCP tools) and normal user features.",
+      "severity": "info",
+      "workaround": "Create one client per kind: a normal web client for user features, an agent client for MCP/agent flows.",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "s15"
+        ],
+        "note": "Seen on the Create OAuth client page and its help text, 2026-10-30."
       }
     }
   ],
@@ -582,6 +595,13 @@
       "kind": "our-test",
       "quote": "code_challenge_methods_supported: [plain, S256]; no registration_endpoint",
       "accessed": "2026-10-30"
+    },
+    {
+      "id": "s15",
+      "title": "Iskaria end-to-end setup by the setup agent (Google Auth Platform console + Connect Google in the Iskaria console)",
+      "url": "https://console.cloud.google.com/auth/scopes",
+      "kind": "our-test",
+      "accessed": "2026-10-30"
     }
   ],
   "meta": {
@@ -639,6 +659,23 @@
         "method": "Endpoint probe: node scripts/probe.ts on 2026-10-30",
         "result": "confirmed",
         "note": "Same Google authorization server as Gmail: PKCE plain and S256, no dynamic client registration; unknown client without scope -> 302 to signin/oauth/error (invalid_request)."
+      },
+      {
+        "claim": "webmasters.readonly is sensitive",
+        "method": "Read the tier Google Auth Platform assigns in Data Access (Iskaria project)",
+        "result": "corrected",
+        "note": "Non-sensitive."
+      },
+      {
+        "claim": "business.manage tier is unclear",
+        "method": "Same console read",
+        "result": "corrected",
+        "note": "Non-sensitive in the console."
+      },
+      {
+        "claim": "A Testing-mode web client can read Business Profile, Search Console and GA4",
+        "method": "End-to-end Connect Google in the Iskaria console with a test user",
+        "result": "confirmed"
       }
     ]
   }

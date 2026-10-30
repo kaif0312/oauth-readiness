@@ -71,6 +71,15 @@ verifier agent that was given the guides but not my conclusions.
 ## What I tested, sourced, or could not verify
 
 - **Tested ourselves (Iskaria, Oct 2026):**
+  - **Google, end to end through the MCP (2026-10-30):** Claude Code fetched `get_setup_plan("google-search-analytics")` from
+    this site's MCP endpoint and filled Google Auth Platform in the owner's signed-in Chrome (Claude in Chrome):
+    - Branding (from the profile), test users, Data Access scopes, and a Web client with the profile's redirect URIs.
+    - It stopped at each Save / Create and sent a desktop notification; the owner clicked them and downloaded the one-time client secret.
+    - Then "Connect Google" in Iskaria's console ran the PKCE flow with a test user and read live data: Business Profile accounts
+      and both clinic locations, 5 Search Console sites, and 3 GA4 properties.
+    - What the console taught us, now in the guide: `webmasters.readonly` and `business.manage` are non-sensitive, so only
+      `analytics.readonly` needs verification; the support email must be your own account or a Google Group; there's a new
+      "AI-powered agent" client type; unsaved console forms are lost on navigation (the agent lost one and refilled it).
   - **Google:** a Testing-mode consent screen with our own client. Refresh tokens expired after 7 days. gcloud's built-in client is blocked for Analytics/Search Console scopes. The Business Profile API needed its own access request.
   - **Meta:** the live app holds messaging scopes but lacks publishing scopes, and publish calls fail with Graph error codes 10/200-299 until Advanced Access is granted. Embedded Signup won't run on localhost.
 - **Endpoint probes:** discovery and authorize behaviour for Google, Microsoft, GitHub, Slack, LinkedIn and Notion (see each guide's sources).
@@ -110,5 +119,6 @@ Deploy: Vercel (Next.js preset). Set `ANTHROPIC_API_KEY`; create a Blob store (`
 - 8 guides, not 100. The schema, research brief and live agent are the scale path; the remaining 92 would be a batch run plus a human review queue.
 - Live guides are unreviewed agent output, marked as such. A live run costs roughly USD 0.50-1.50 in API usage and takes 2-4 minutes.
 - Guides go stale. Each records its access date; there is no automatic re-check yet (a scheduled re-run diffing verdicts would be next).
-- The setup agent covers GitHub only. Other providers' consoles would need per-provider scripts and a human at every login.
+- Browser setup is proven for Google (agent-driven, owner saves) and scripted for GitHub (the manifest script was only dry-run
+  tested; the live run timed out waiting for sign-in). Other consoles work the same way in principle, but each changes often.
 - One developer profile (Iskaria). Making it editable per visitor is a small step that wasn't needed for the demo.
