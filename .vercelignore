@@ -1,0 +1,8 @@
+.auth
+.secrets
+.data
+.env*
+!.env.example
+.next
+node_modules
+.next-dev.log

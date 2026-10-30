@@ -77,7 +77,10 @@ const serverTools = [
 ] as unknown as Anthropic.ToolUnion[];
 
 export async function generateGuide(query: string, slug: string, emit: (e: AgentEvent) => void): Promise<Guide> {
-  const client = new Anthropic();
+  // Explicit key: on Vercel the SDK's credential chain can otherwise pick up another token source.
+  const apiKey = process.env.ANTHROPIC_API_KEY?.trim().replace(/^["']|["']$/g, "");
+  if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not set on the server.");
+  const client = new Anthropic({ apiKey, authToken: null });
 
   // ---- Phase 1: research ----
   emit({ type: "phase", phase: "research", text: `Researching ${query}` });

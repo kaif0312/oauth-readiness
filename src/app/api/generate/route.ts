@@ -31,7 +31,10 @@ export async function POST(req: Request) {
         await saveGuide(guide);
         emit({ type: "done", slug });
       } catch (err) {
-        emit({ type: "error", message: err instanceof Error ? err.message : String(err) });
+        const message = err instanceof Error ? err.message : String(err);
+        // Auth failures: report the configured key's length (never the key) to tell a bad value from a missing one.
+        const hint = /authentication_error/.test(message) ? ` (server key length ${process.env.ANTHROPIC_API_KEY?.length ?? 0})` : "";
+        emit({ type: "error", message: message + hint });
       } finally {
         controller.close();
       }
