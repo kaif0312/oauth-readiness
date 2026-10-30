@@ -79,7 +79,7 @@ verifier agent that was given the guides but not my conclusions.
       and both clinic locations, 5 Search Console sites, and 3 GA4 properties.
     - What the console taught us, now in the guide: `webmasters.readonly` and `business.manage` are non-sensitive, so only
       `analytics.readonly` needs verification; the support email must be your own account or a Google Group; there's a new
-      "AI-powered agent" client type; unsaved console forms are lost on navigation (the agent lost one and refilled it).
+      "AI-powered agent" client type; unsaved console forms are lost on navigation (the agent lost one and refilled it), and a "saved" Branding page had kept only the domain, which surfaced only when Publish stayed disabled. Setup plans now tell the agent to reload and read values back after every save.
   - **Google:** a Testing-mode consent screen with our own client. Refresh tokens expired after 7 days. gcloud's built-in client is blocked for Analytics/Search Console scopes. The Business Profile API needed its own access request.
   - **Meta:** the live app holds messaging scopes but lacks publishing scopes, and publish calls fail with Graph error codes 10/200-299 until Advanced Access is granted. Embedded Signup won't run on localhost.
 - **Endpoint probes:** discovery and authorize behaviour for Google, Microsoft, GitHub, Slack, LinkedIn and Notion (see each guide's sources).

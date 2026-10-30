@@ -29,6 +29,7 @@ export const BROWSER_RULES = [
   "Never click a final Submit / Publish / Create for production, accept terms, or pay; the human does that.",
   "Fill only values from the plan. If a field is 'missing', leave it empty and list it for the human.",
   "Consoles change: if the page does not match the step, describe what you see and ask; do not guess.",
+  "Never navigate away from a filled form before it is saved: consoles drop unsaved input. After every save, reload the page and read the values back; a save can silently keep only some fields.",
   "Record client ids you see; never copy client secrets into chat. Ask the human to store them.",
 ];
 
