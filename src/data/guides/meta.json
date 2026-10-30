@@ -504,7 +504,7 @@
     },
     {
       "title": "Embedded Signup: HTTPS only, not your own portfolio, 10 customers/week before verification",
-      "detail": "Embedded Signup runs only on Allowed Domains with HTTPS, so localhost is out. The Tech Provider cannot onboard the portfolio that owns the app. Before Business Verification + App Review + Access Verification, the cap is 10 new customers per rolling 7 days.",
+      "detail": "Embedded Signup runs only on Allowed Domains with HTTPS, so localhost is out. The Tech Provider cannot onboard the portfolio that owns the app. Before Business Verification + App Review + Access Verification, the cap is 10 new customers per rolling 7 days; completing all three raises it automatically to 200, and more needs Meta Business Partner status.",
       "severity": "slows-you-down",
       "workaround": "Test on a preview HTTPS domain with a separate test business portfolio.",
       "evidence": {
@@ -695,6 +695,14 @@
       "kind": "our-test",
       "quote": "App holds pages_messaging, pages_read_engagement, instagram_manage_messages/comments, ads_management, business_management; not pages_manage_posts or instagram_content_publish.",
       "accessed": "2026-10-30"
+    },
+    {
+      "id": "m18",
+      "title": "Endpoint probe, 2026-10-30",
+      "url": "https://www.facebook.com/.well-known/openid-configuration",
+      "kind": "our-test",
+      "quote": "openid-configuration: response_types_supported [id_token, token id_token]; no token_endpoint, no code_challenge_methods_supported, no registration_endpoint",
+      "accessed": "2026-10-30"
     }
   ],
   "meta": {
@@ -734,6 +742,24 @@
         "method": "Meta forum threads quoting the dashboard (Sep-Oct 2026)",
         "result": "unverified",
         "note": "The dashboard states it, but several developers report 9+ business days."
+      },
+      {
+        "claim": "Embedded Signup onboarding cap: 10 new business customers per rolling 7 days before Business Verification + App Review + Access Verification",
+        "method": "Independent check: re-fetched developers.facebook.com/docs/whatsapp/embedded-signup/ on 2026-10-30",
+        "result": "confirmed",
+        "note": "Added the raised limit (200 per rolling 7 days, automatic) to the blocker."
+      },
+      {
+        "claim": "App Review decision in about a week (Meta) vs ~20 days per cycle (developer reports)",
+        "method": "Independent check: re-fetched developers.facebook.com/docs/app-review/submission-guide/ on 2026-10-30",
+        "result": "confirmed",
+        "note": "Meta: 'you should receive a decision within a week'. The 20-day figure is third-party only. If Meta cannot access the app, the entire submission is rejected; otherwise permissions are judged one by one."
+      },
+      {
+        "claim": "OAuth endpoint behaviour (discovery metadata, PKCE, dynamic registration, unknown-client handling)",
+        "method": "Endpoint probe: node scripts/probe.ts on 2026-10-30",
+        "result": "confirmed",
+        "note": "Facebook's OIDC discovery only describes Limited Login (implicit id_token); no PKCE methods advertised, no dynamic registration. /v21.0/dialog/oauth with an unknown client_id returns HTTP 200 with an HTML error page."
       }
     ]
   }

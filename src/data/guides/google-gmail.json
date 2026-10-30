@@ -9,7 +9,7 @@
     "timeToFirstToken": "30 min",
     "timeToLaunch": "1-10+ weeks",
     "launchNote": "1-3 weeks with gmail.send only (sensitive); 4-10+ weeks with any restricted Gmail scope (adds CASA).",
-    "reviewRequired": "Brand verification (about 2-3 business days), then sensitive-scope verification (up to about 10 days). Restricted scopes also need restricted-scope review and an annual CASA security assessment with a Letter of Validation from an authorized assessor.",
+    "reviewRequired": "Brand verification (minutes if automated, 2-3 business days if manual), then sensitive-scope verification (up to about 10 days). Restricted scopes also need restricted-scope review and an annual CASA security assessment with a Letter of Validation from an authorized assessor.",
     "cost": "Free, or USD 540+/yr",
     "costNote": "Free for gmail.send only. Restricted scopes: a paid CASA assessment every year, roughly USD 540-1,800 per app per year at the AL1 level (TAC Security lists its Basic AL1 plan at USD 675), and more at AL2.",
     "evidence": {
@@ -18,7 +18,8 @@
         "s1",
         "s2",
         "s3",
-        "s7"
+        "s7",
+        "s16"
       ],
       "note": "Wait times are Google's stated targets. Real reviews often take longer when the reviewer asks for changes. Cost figures come from the assessor's own price page and community reports, not from Google."
     }
@@ -306,14 +307,15 @@
       "title": "Publish the app and submit it for verification",
       "who": "you",
       "phase": "launch",
-      "detail": "Under Audience, click Publish app. Then open Verification Center and submit. Brand verification runs first (about 2-3 business days), then the scope review. In the submission, justify each scope against a user-facing feature. Reviewers reply by email to the developer contact addresses, and work stops until you answer.",
+      "detail": "Under Audience, click Publish app. Then open Verification Center and submit. Brand verification runs first (usually a few minutes when the automated check passes, 2-3 business days if it goes to manual review), then the scope review. In the submission, justify each scope against a user-facing feature. Reviewers reply by email to the developer contact addresses, and work stops until you answer.",
       "url": "https://console.cloud.google.com/auth/verification",
       "estimate": "30 min hands-on, then 3-10+ days of waiting",
       "evidence": {
         "status": "sourced",
         "sourceIds": [
           "s2",
-          "s3"
+          "s3",
+          "s16"
         ]
       }
     },
@@ -465,12 +467,13 @@
     },
     {
       "title": "Brand changes restart brand verification",
-      "detail": "Changing the app name, logo, homepage or domain after approval sends you back through the 2-3 day brand check, and the app name must match the homepage.",
+      "detail": "Changing the app name, logo, homepage or domain after approval sends you back through the brand check (minutes if automated, 2-3 business days if manual), and the app name must match the homepage.",
       "severity": "slows-you-down",
       "evidence": {
         "status": "sourced",
         "sourceIds": [
-          "s2"
+          "s2",
+          "s16"
         ]
       }
     },
@@ -505,7 +508,7 @@
     ]
   },
   "uncertainties": [
-    "Real review durations: Google states 2-3 business days for brand, up to 10 days for sensitive and 'several weeks' for restricted. Community reports range from days to more than 2 months when there are follow-up rounds.",
+    "Real review durations: Google states a few minutes for automated brand checks (2-3 business days if manual), up to 10 days for sensitive and 'several weeks' for restricted. Community reports range from days to more than 2 months when there are follow-up rounds.",
     "CASA pricing and options: Google publishes no price. The figures come from TAC Security's page and blogs. Community posts (2026) say the free self-scan route for Tier 2 is gone and every option is paid. We could not confirm that on an official Google page.",
     "Whether a send-only server needs CASA: the restricted-scope rules apply to restricted scopes only, so gmail.send alone should not need it. We did not test a Gmail verification ourselves.",
     "Iskaria's own setup was tested with Search Console and Analytics scopes, not Gmail. The Gmail-specific steps are sourced, not tested."
@@ -629,6 +632,22 @@
       "kind": "provider-policy",
       "quote": "All other transfers, uses, or sales of user data are prohibited",
       "accessed": "2026-10-30"
+    },
+    {
+      "id": "s16",
+      "title": "Brand verification",
+      "url": "https://developers.google.com/identity/protocols/oauth2/production-readiness/brand-verification",
+      "kind": "official-docs",
+      "quote": "The automated brand verification process typically takes a few minutes ... [manual review] usually takes 2-3 business days.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s17",
+      "title": "Endpoint probe, 2026-10-30",
+      "url": "https://accounts.google.com/.well-known/openid-configuration",
+      "kind": "our-test",
+      "quote": "code_challenge_methods_supported: [plain, S256]; no registration_endpoint; unknown client_id + no scope -> 302 to signin/oauth/error (invalid_request: Missing required parameter: scope)",
+      "accessed": "2026-10-30"
     }
   ],
   "meta": {
@@ -651,7 +670,7 @@
         "claim": "Common claim: sensitive-scope review takes 3-5 business days",
         "method": "Google's sensitive-scope page (s3)",
         "result": "corrected",
-        "note": "Google now says 'up to 10 days'. Brand verification alone is 2-3 business days (s2)."
+        "note": "Google now says 'up to 10 days'. Brand verification alone is minutes if automated, 2-3 business days if manual (s16)."
       },
       {
         "claim": "Common claim: CASA has a free Tier 2 self-scan and Tier 3 lab audits",
@@ -663,6 +682,35 @@
         "claim": "Testing-mode refresh tokens expire after 7 days",
         "method": "OAuth 2.0 overview (s5) and Iskaria's own weekly re-logins (s13)",
         "result": "confirmed"
+      },
+      {
+        "claim": "Brand verification takes about 2-3 business days",
+        "method": "Independent check: fetched Google's 'Brand verification' page on 2026-10-30",
+        "result": "corrected",
+        "note": "Google: automated check typically a few minutes; 2-3 business days only when it falls to manual review. Verdict, step and blocker updated."
+      },
+      {
+        "claim": "gmail.send sensitive; gmail.compose, readonly, modify, metadata restricted; gmail.labels non-sensitive",
+        "method": "Independent check: re-fetched developers.google.com/workspace/gmail/api/auth/scopes on 2026-10-30",
+        "result": "confirmed",
+        "note": "Also restricted: mail.google.com, gmail.insert, gmail.settings.basic, gmail.settings.sharing."
+      },
+      {
+        "claim": "Testing: max 100 test users, authorizations incl. refresh tokens expire 7 days after consent; unverified production cap 100 users lifetime, not resettable",
+        "method": "Independent check: fetched support.google.com/cloud/answer/15549945 on 2026-10-30",
+        "result": "confirmed"
+      },
+      {
+        "claim": "CASA is needed when restricted-scope data reaches or passes through your server, renewed every 12 months",
+        "method": "Independent check: fetched support.google.com/cloud/answer/13465431 and the restricted-scope verification page on 2026-10-30",
+        "result": "confirmed",
+        "note": "The help article says all restricted-scope apps are revalidated yearly without the server qualifier; the developer page keeps the 'from or through a third-party server' condition. CASA price not on any Google page (unverified)."
+      },
+      {
+        "claim": "OAuth endpoint behaviour (discovery metadata, PKCE, dynamic registration, unknown-client handling)",
+        "method": "Endpoint probe: node scripts/probe.ts on 2026-10-30",
+        "result": "confirmed",
+        "note": "Discovery found at both oauth-authorization-server and openid-configuration; PKCE plain and S256; no dynamic client registration. Authorize with an unknown client redirected to Google's error page (invalid_request, missing scope) before checking the client."
       }
     ]
   }

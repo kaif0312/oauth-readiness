@@ -9,14 +9,15 @@
     "timeToFirstToken": "30 min",
     "timeToLaunch": "1-3 weeks",
     "launchNote": "1-3 weeks for Search Console + GA4. Business Profile adds an access request that takes days to weeks; run it in parallel.",
-    "reviewRequired": "Brand verification (about 2-3 business days), then sensitive-scope verification (up to about 10 days) for webmasters.readonly and analytics.readonly. Business Profile also needs Google's separate API access approval. No security assessment.",
+    "reviewRequired": "Brand verification (minutes if automated, 2-3 business days if manual), then sensitive-scope verification (up to about 10 days) for webmasters.readonly and analytics.readonly. Business Profile also needs Google's separate API access approval. No security assessment.",
     "cost": "Free",
     "evidence": {
       "status": "sourced",
       "sourceIds": [
         "s3",
         "s4",
-        "s7"
+        "s7",
+        "s13"
       ],
       "note": "The sensitive tier for these scopes is inferred from community docs and from the unverified-app warning Iskaria saw. Google does not publish a per-scope list for them."
     }
@@ -565,6 +566,22 @@
       "kind": "official-docs",
       "quote": "The app or script might display an \"unverified app\" screen before it displays the consent screen.",
       "accessed": "2026-10-30"
+    },
+    {
+      "id": "s13",
+      "title": "Brand verification",
+      "url": "https://developers.google.com/identity/protocols/oauth2/production-readiness/brand-verification",
+      "kind": "official-docs",
+      "quote": "The automated brand verification process typically takes a few minutes ... [manual review] usually takes 2-3 business days.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s14",
+      "title": "Endpoint probe, 2026-10-30",
+      "url": "https://accounts.google.com/.well-known/openid-configuration",
+      "kind": "our-test",
+      "quote": "code_challenge_methods_supported: [plain, S256]; no registration_endpoint",
+      "accessed": "2026-10-30"
     }
   ],
   "meta": {
@@ -591,13 +608,37 @@
         "claim": "Common claim: sensitive-scope review takes 3-5 business days",
         "method": "Google's sensitive-scope verification page (s4)",
         "result": "corrected",
-        "note": "Google now says up to 10 days, after 2-3 business days of brand verification"
+        "note": "Google now says up to 10 days, after brand verification (minutes if automated, 2-3 business days if manual)"
       },
       {
         "claim": "Consent screen is configured under 'APIs & Services > OAuth consent screen'",
         "method": "Workspace guide (s6) and Iskaria's console session (s1)",
         "result": "corrected",
         "note": "It is now Google Auth Platform > Branding / Audience / Data Access / Clients"
+      },
+      {
+        "claim": "Business Profile API: quota 0 QPM until access approved; needs a profile verified and active 60+ days and a website",
+        "method": "Independent check: fetched developers.google.com/my-business/content/prereqs on 2026-10-30",
+        "result": "confirmed",
+        "note": "Approved projects show 300 QPM. Google gives no turnaround time."
+      },
+      {
+        "claim": "webmasters.readonly and analytics.readonly are sensitive scopes",
+        "method": "Independent check: fetched developers.google.com/identity/protocols/oauth2/scopes (full page) and Search Console authorizing guide on 2026-10-30",
+        "result": "unverified",
+        "note": "Neither public page labels sensitivity; only the Cloud console shows it. Still rests on the console warning Iskaria saw."
+      },
+      {
+        "claim": "Brand verification takes about 2-3 business days",
+        "method": "Independent check: fetched Google's 'Brand verification' page on 2026-10-30",
+        "result": "corrected",
+        "note": "Automated check usually a few minutes; 2-3 business days only for manual review. reviewRequired updated."
+      },
+      {
+        "claim": "OAuth endpoint behaviour (discovery metadata, PKCE, dynamic registration, unknown-client handling)",
+        "method": "Endpoint probe: node scripts/probe.ts on 2026-10-30",
+        "result": "confirmed",
+        "note": "Same Google authorization server as Gmail: PKCE plain and S256, no dynamic client registration; unknown client without scope -> 302 to signin/oauth/error (invalid_request)."
       }
     ]
   }

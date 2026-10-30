@@ -26,14 +26,15 @@
   },
   "testMode": {
     "available": true,
-    "limits": "Before approval only the open permissions work (openid, profile, email, w_member_social: posting as yourself, not as a Page). Development tier: 500 calls per app and 100 per member per 24 h, no BATCH_GET, social-action webhooks disabled. Integration must be finished within 12 months. Access tokens last 60 days; programmatic refresh tokens are partner-only.",
+    "limits": "Before approval only the open permissions work (openid, profile, email, w_member_social: posting as yourself, not as a Page). Development tier: 500 calls per app and 100 per member per 24 h, no BATCH_GET, social-action webhooks disabled. Integration must be finished within 12 months. Access tokens last 60 days; programmatic refresh tokens (365 days) come only with approved Marketing API (MDP) access such as Community Management, not with the self-serve products.",
     "evidence": {
       "status": "sourced",
       "sourceIds": [
         "l1",
         "l2",
         "l3",
-        "l7"
+        "l7",
+        "l12"
       ]
     }
   },
@@ -315,12 +316,13 @@
       "title": "Handle 60-day token expiry",
       "who": "agent",
       "phase": "launch",
-      "detail": "Access tokens last 60 days, and programmatic refresh tokens are only for a limited set of partners. Without refresh tokens, re-run the authorization flow (silent if the member is still logged in) before expiry. If you change scopes, users must re-consent, and earlier tokens are invalidated.",
+      "detail": "Access tokens last 60 days, and programmatic refresh tokens (valid 365 days) are issued only to apps approved for the Marketing Developer Platform, which Community Management access is part of; self-serve apps (Sign In, Share on LinkedIn) get none. Without refresh tokens, re-run the authorization flow (silent if the member is still logged in) before expiry. If you change scopes, users must re-consent, and earlier tokens are invalidated.",
       "estimate": "2-4 h",
       "evidence": {
         "status": "sourced",
         "sourceIds": [
-          "l7"
+          "l7",
+          "l12"
         ]
       }
     }
@@ -570,6 +572,22 @@
       "kind": "community",
       "quote": "Organization permissions must be used when using organization as author",
       "accessed": "2026-10-30"
+    },
+    {
+      "id": "l12",
+      "title": "Refresh Tokens with OAuth 2.0 (LinkedIn)",
+      "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/programmatic-refresh-tokens",
+      "kind": "official-docs",
+      "quote": "LinkedIn supports programmatic refresh tokens for all approved Marketing Developer Platform (MDP) partners. ... access tokens are valid for 60 days and programmatic refresh tokens are valid for a year.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "l13",
+      "title": "Endpoint probe, 2026-10-30",
+      "url": "https://www.linkedin.com/oauth/.well-known/openid-configuration",
+      "kind": "our-test",
+      "quote": "openid-configuration at /oauth only; scopes_supported: [openid, profile, email]; no code_challenge_methods_supported; no registration_endpoint",
+      "accessed": "2026-10-30"
     }
   ],
   "meta": {
@@ -602,12 +620,35 @@
         "claim": "Refresh tokens are available to all apps",
         "method": "Fetched 3-legged OAuth doc",
         "result": "corrected",
-        "note": "Programmatic refresh tokens are only for a limited set of partners. Access tokens last 60 days."
+        "note": "Superseded by the independent check below: refresh tokens go to all approved Marketing Developer Platform apps (incl. Community Management). Access tokens last 60 days."
       },
       {
         "claim": "Development tier review takes 10-14 business days",
         "method": "Microsoft Q&A post (Aug 2026); no official page found",
         "result": "unverified"
+      },
+      {
+        "claim": "Programmatic refresh tokens are partner-only / limited set of partners",
+        "method": "Independent check: fetched LinkedIn 'Refresh Tokens with OAuth 2.0' on Microsoft Learn on 2026-10-30",
+        "result": "corrected",
+        "note": "Doc says all approved MDP partners get them (365-day refresh, 60-day access). An app approved for Community Management should receive them; self-serve apps do not. testMode and the token item updated."
+      },
+      {
+        "claim": "Development tier: 500 calls/app and 100/member per 24 h, no BATCH_GET, social-action webhooks off, 12 months to finish; Standard tier is discretionary",
+        "method": "Independent check: fetched learn.microsoft.com/linkedin/marketing/increasing-access (version 2026-10) on 2026-10-30",
+        "result": "confirmed"
+      },
+      {
+        "claim": "A rejected Development or Standard tier request cannot be re-applied on the same app; create a new app",
+        "method": "Independent check: fetched learn.microsoft.com/linkedin/marketing/community-management-app-review on 2026-10-30",
+        "result": "confirmed",
+        "note": "A rejected Standard request sends you back to a new app and a new Development tier form."
+      },
+      {
+        "claim": "OAuth endpoint behaviour (discovery metadata, PKCE, dynamic registration, unknown-client handling)",
+        "method": "Endpoint probe: node scripts/probe.ts on 2026-10-30",
+        "result": "confirmed",
+        "note": "LinkedIn's OIDC discovery lives under /oauth (root .well-known paths 404) and lists only openid/profile/email; it advertises no PKCE methods and no dynamic registration. Unknown client_id on /oauth/v2/authorization returns HTTP 200 with an HTML page."
       }
     ]
   }

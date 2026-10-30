@@ -302,7 +302,7 @@
       "title": "Make it public and handle org installs",
       "who": "you",
       "phase": "launch",
-      "detail": "Switch to 'Any account'. Share the public install link. In organizations, only owners can install on the whole org; repo admins can install on repos they administer if the app requests no organization permissions; other members can only request, which emails the owner. Optional: list on GitHub Marketplace (privacy policy, support link; paid plans need a verified-publisher org and 100+ installations).",
+      "detail": "Switch to 'Any account'. Share the public install link. In organizations, only owners can install on the whole org; repo admins can install on repos they administer if the app requests no organization permissions and not Repository administration; other members can only request, which emails the owner. Optional: list on GitHub Marketplace (privacy policy, support link; paid plans need a verified-publisher org and 100+ installations).",
       "estimate": "10 min",
       "evidence": {
         "status": "sourced",
@@ -378,14 +378,15 @@
   "blockers": [
     {
       "title": "Org members cannot install the app themselves",
-      "detail": "Only organization owners can install a GitHub App on an org (repo admins only on their repos, and only if no organization permissions are requested). A member's attempt sends a request email to the owner and waits.",
+      "detail": "Only organization owners can install a GitHub App on an org (repo admins only on their repos, and only if the app requests no organization permissions and not the 'Repository administration' permission; owners can also switch off installs by repo admins). A member's attempt sends a request email to the owner and waits.",
       "severity": "slows-you-down",
-      "workaround": "Request only repository permissions so repo admins can install; tell users up front that an org owner may need to approve.",
+      "workaround": "Request only repository permissions (and not Repository administration) so repo admins can install; tell users up front that an org owner may need to approve.",
       "evidence": {
         "status": "sourced",
         "sourceIds": [
           "g5",
-          "g6"
+          "g6",
+          "g12"
         ]
       }
     },
@@ -547,6 +548,22 @@
       "kind": "official-docs",
       "quote": "Grants full access to public and private repositories",
       "accessed": "2026-10-30"
+    },
+    {
+      "id": "g12",
+      "title": "Installing a GitHub App from a third party",
+      "url": "https://docs.github.com/en/apps/using-github-apps/installing-a-github-app-from-a-third-party",
+      "kind": "official-docs",
+      "quote": "Repository admins can install only if the app doesn't request organization permissions or the \"Repository administration\" permission.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "g13",
+      "title": "Endpoint probe, 2026-10-30",
+      "url": "https://github.com/login/oauth/authorize",
+      "kind": "our-test",
+      "quote": "No .well-known/oauth-authorization-server or openid-configuration (404); unknown client_id redirects (302) to the github.com login page instead of an error",
+      "accessed": "2026-10-30"
     }
   ],
   "meta": {
@@ -581,6 +598,24 @@
         "method": "Read the registration and Marketplace docs for any approval step",
         "result": "unverified",
         "note": "No doc says so explicitly; none describes a review outside the optional Marketplace."
+      },
+      {
+        "claim": "Only org owners install on an org; repo admins only when no organization permissions are requested",
+        "method": "Independent check: fetched docs.github.com 'Installing a GitHub App from a third party' on 2026-10-30",
+        "result": "corrected",
+        "note": "Repo admins are also blocked if the app requests the 'Repository administration' permission, and owners can disable repo-admin installs. Blocker and launch step updated."
+      },
+      {
+        "claim": "Installation tokens: 5,000 req/h, +50 per repo above 20, cap 12,500 (15,000 Enterprise Cloud); secondary 80 content-creating/min, 500/h, 900 REST points/min",
+        "method": "Independent check: fetched docs.github.com 'Rate limits for the REST API' on 2026-10-30",
+        "result": "confirmed",
+        "note": "All figures match; GitHub notes secondary limits can change without notice."
+      },
+      {
+        "claim": "OAuth endpoint behaviour (discovery metadata, PKCE, dynamic registration, unknown-client handling)",
+        "method": "Endpoint probe: node scripts/probe.ts on 2026-10-30",
+        "result": "confirmed",
+        "note": "github.com publishes no OAuth/OIDC discovery document (both 404), so no advertised PKCE methods and no registration_endpoint. The authorize endpoint with an unknown client_id answers 302 to /login rather than an error page."
       }
     ]
   }

@@ -552,6 +552,14 @@
       "kind": "community",
       "quote": "These new permissions are now rolling out and include 20 additional excluded permissions for Outlook Mailbox, Outlook Mail, Outlook Calendar, Teams Chat, and Teams Meetings.",
       "accessed": "2026-10-30"
+    },
+    {
+      "id": "s12",
+      "title": "Endpoint probe, 2026-10-30",
+      "url": "https://login.microsoftonline.com/common/v2.0/.well-known/openid-configuration",
+      "kind": "our-test",
+      "quote": "openid-configuration under /common/v2.0 (root paths 404); scopes_supported [openid, profile, email, offline_access]; no code_challenge_methods_supported field; no registration_endpoint",
+      "accessed": "2026-10-30"
     }
   ],
   "meta": {
@@ -593,6 +601,28 @@
         "method": "Fetched Partner Center verification process page",
         "result": "confirmed",
         "note": "Three to five business days in most cases."
+      },
+      {
+        "claim": "Microsoft-managed default consent policy excludes Mail.Read, Mail.ReadWrite, Calendars.Read/ReadWrite, Contacts.ReadWrite, Files.Read.All...; Mail.Send is not excluded; default for new tenants",
+        "method": "Independent check: re-fetched learn.microsoft.com 'Manage app consent policies' (ms.date 2026-01-22, updated 2026-08-28) on 2026-10-30",
+        "result": "confirmed",
+        "note": "List also includes MailboxSettings.*, Tasks.*, People.Read, Chat.*, OnlineMeetings.* and EAS/EWS/IMAP/POP for Exchange. Mail.Send absent."
+      },
+      {
+        "claim": "Client secrets max 24 months; Microsoft recommends under 12 and says secrets should not be used in production",
+        "method": "Independent check: re-fetched learn.microsoft.com 'Add and manage app credentials' on 2026-10-30",
+        "result": "confirmed"
+      },
+      {
+        "claim": "Partner Center business verification typically 3-5 business days",
+        "method": "Independent check: not re-fetched; relies on s7 only",
+        "result": "unverified"
+      },
+      {
+        "claim": "OAuth endpoint behaviour (discovery metadata, PKCE, dynamic registration, unknown-client handling)",
+        "method": "Endpoint probe: node scripts/probe.ts on 2026-10-30",
+        "result": "confirmed",
+        "note": "Entra's v2.0 discovery is found only under the tenant path, does not advertise PKCE methods (Entra supports S256 in practice, not shown here) and has no dynamic registration. Unknown client_id on /common/oauth2/v2.0/authorize returns HTTP 200 with an HTML error page."
       }
     ]
   }

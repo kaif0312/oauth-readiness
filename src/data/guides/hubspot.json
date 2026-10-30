@@ -486,6 +486,22 @@
       "kind": "community",
       "quote": "Sandboxes count, real customers count, beta installs count.",
       "accessed": "2026-10-30"
+    },
+    {
+      "id": "s9",
+      "title": "App listing requirements in the HubSpot Marketplace",
+      "url": "https://developers.hubspot.com/docs/apps/developer-platform/list-apps/listing-your-app/app-marketplace-listing-requirements",
+      "kind": "official-docs",
+      "quote": "your app must have at least three active, unique installs ... unique HubSpot production accounts, unaffiliated with your organization ... within the past 30 days.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s10",
+      "title": "Endpoint probe, 2026-10-30",
+      "url": "https://app.hubspot.com/.well-known/oauth-authorization-server",
+      "kind": "our-test",
+      "quote": "code_challenge_methods_supported: [S256]; response_types: [code]; no registration_endpoint; no openid-configuration (404)",
+      "accessed": "2026-10-30"
     }
   ],
   "meta": {
@@ -520,6 +536,29 @@
         "claim": "Certification needs 60 active installs and 6 months listed",
         "method": "Fetched certification requirements page",
         "result": "confirmed"
+      },
+      {
+        "claim": "Marketplace-distribution apps on the new platform are capped at 25 installs until listed; private distribution 10 accounts (100 for Solution Partners)",
+        "method": "Independent check: re-fetched the HubSpot changelog 'New Marketplace Distribution App Install Limits' (s1) and the Authentication overview on 2026-10-30",
+        "result": "confirmed",
+        "note": "Applies from 22 Sep 2025 to apps created on or migrated to 2025.2+; legacy apps with >25 installs get the cap on migration."
+      },
+      {
+        "claim": "Listing needs 3 active installs from unaffiliated production accounts (30-day activity); first review within 10 business days",
+        "method": "Independent check: fetched the live App listing requirements page (s9) on 2026-10-30",
+        "result": "confirmed",
+        "note": "The 60-day figure is the maximum for the whole feedback process, counted from when feedback is shared, not from submission."
+      },
+      {
+        "claim": "Legacy public apps unsupported 15 Sep 2026 (enforcement Sep 2027); 2025.2 apps migrate to 2026.09 by March 2027; v1-v4 APIs lose certification after Sep 2027",
+        "method": "Independent check: re-fetched the HubSpot changelog (s6) on 2026-10-30",
+        "result": "confirmed"
+      },
+      {
+        "claim": "OAuth endpoint behaviour (discovery metadata, PKCE, dynamic registration, unknown-client handling)",
+        "method": "Endpoint probe: node scripts/probe.ts on 2026-10-30",
+        "result": "confirmed",
+        "note": "HubSpot publishes RFC 8414 metadata: PKCE S256 only, code flow only, no dynamic client registration, no OIDC. Unknown client_id on /oauth/authorize returns HTTP 200 with the OAuth UI page (error rendered client-side)."
       }
     ]
   }

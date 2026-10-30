@@ -507,6 +507,14 @@
       "kind": "community",
       "quote": "That grace period ended March 3, 2026.",
       "accessed": "2026-10-30"
+    },
+    {
+      "id": "s13",
+      "title": "Endpoint probe, 2026-10-30",
+      "url": "https://slack.com/.well-known/openid-configuration",
+      "kind": "our-test",
+      "quote": "openid-configuration: grant_types [authorization_code]; scopes [openid, profile, email]; no code_challenge_methods_supported; no registration_endpoint",
+      "accessed": "2026-10-30"
     }
   ],
   "meta": {
@@ -542,6 +550,24 @@
         "method": "Fetched the Marketplace review guide",
         "result": "confirmed",
         "note": "Up to 10 business days preliminary, up to 10 weeks functional (6 for resubmissions); 10 active workspaces required first."
+      },
+      {
+        "claim": "Non-Marketplace commercially distributed apps: conversations.history/replies at 1 req/min, limit 15, since 29 May 2025 for new apps and new installs; Marketplace and internal apps keep 50+/min, 1,000 objects",
+        "method": "Independent check: re-fetched the Slack changelog of 2025-05-29 on 2026-10-30; the method page still shows Tier 3 (50+/min) as the default",
+        "result": "confirmed",
+        "note": "Existing installations of older non-Marketplace apps kept the old limits per the changelog."
+      },
+      {
+        "claim": "Marketplace: 10+ active workspaces to submit; preliminary review up to 10 business days; functional review up to 10 weeks for new apps; *:history, files:read, search:read.* get enhanced review",
+        "method": "Independent check: fetched docs.slack.dev Marketplace review guide and app guidelines on 2026-10-30",
+        "result": "confirmed",
+        "note": "Active = used in the past 28 days; the 10-week clock starts when a reviewer is assigned."
+      },
+      {
+        "claim": "OAuth endpoint behaviour (discovery metadata, PKCE, dynamic registration, unknown-client handling)",
+        "method": "Endpoint probe: node scripts/probe.ts on 2026-10-30",
+        "result": "confirmed",
+        "note": "Slack's discovery covers only Sign in with Slack (OIDC), not the v2 bot-scope flow; no PKCE methods advertised and no dynamic registration. /oauth/v2/authorize with an unknown client_id returns HTTP 200 with an HTML page."
       }
     ]
   }
