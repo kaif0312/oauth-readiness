@@ -43,7 +43,7 @@ two numbers: **first token** (hands-on time to your own working connection) and 
    second page and writes a dossier.
 2. **Compose**: a second call with structured outputs constrained to the zod `Guide` schema (`src/lib/guide.ts`). It only uses facts and URLs
    from the dossier; dangling source ids are dropped.
-3. **Save**: Upstash Redis in production, `.data/` locally. Seeded guides live in the repo.
+3. **Save**: one public JSON file per guide in Vercel Blob in production, `.data/` locally. Seeded guides live in the repo.
 
 The seeded guides were written the same way, by parallel research agents following `docs/research-brief.md`, then checked by a separate
 verifier agent that was given the guides but not my conclusions.
@@ -89,7 +89,7 @@ verifier agent that was given the guides but not my conclusions.
 
 ```sh
 npm install
-cp .env.example .env.local      # add ANTHROPIC_API_KEY (and Upstash vars for production)
+cp .env.example .env.local      # add ANTHROPIC_API_KEY (BLOB_READ_WRITE_TOKEN comes from `vercel env pull`)
 npm run dev                     # http://localhost:3000
 node scripts/validate.ts        # check all guides against the schema
 node scripts/probe.ts accounts.google.com --authorize https://accounts.google.com/o/oauth2/v2/auth
@@ -97,7 +97,7 @@ node scripts/setup-github.ts --dry-run   # print the GitHub App manifest built f
 node scripts/setup-github.ts             # real run: opens Chrome, you sign in and click Create
 ```
 
-Deploy: Vercel (Next.js preset). Set `ANTHROPIC_API_KEY`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, optionally
+Deploy: Vercel (Next.js preset). Set `ANTHROPIC_API_KEY`; create a Blob store (`vercel blob create-store <name> --access public`, which sets `BLOB_READ_WRITE_TOKEN`); optionally
 `DAILY_GENERATION_LIMIT` (default 40 live runs/day). The generate route needs up to 300 s (`maxDuration`).
 
 ## Limitations
