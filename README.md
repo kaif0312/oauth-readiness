@@ -30,6 +30,11 @@ two numbers: **first token** (hands-on time to your own working connection) and 
   missing: "Google needs a Limited Use section in your privacy policy; Iskaria's has none." The profile is my own company, Iskaria, a
   clinic-operations console with an AI assistant. Using a real company means the gaps are real, and we have actually set up Google and Meta
   for it.
+- **MCP server** (`/api/mcp`, Streamable HTTP, no auth): the same guides for agents. Tools: `list_guides`, `get_guide`,
+  `get_setup_plan` (a guide turned into browser-agent instructions: each form field resolved to a profile value or marked missing,
+  and STOP points where the human signs in, pays or submits; pass your own `profile` to personalise), `get_profile`, and
+  `research_app` (runs the live agent). Add it to Claude Code with
+  `claude mcp add --transport http oauth-readiness https://oauth-readiness-five.vercel.app/api/mcp`.
 - **Setup agent** (`scripts/setup-github.ts`): registers a real GitHub App from the profile via GitHub's App Manifest flow. The agent does
   everything except sign-in and the final "Create" click. At each handoff it notifies you (terminal bell, phone push via ntfy, or any chat
   webhook), then receives the credentials and saves them to `.secrets/`.
