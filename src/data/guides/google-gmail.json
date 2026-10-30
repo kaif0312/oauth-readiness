@@ -1,0 +1,669 @@
+{
+  "slug": "google-gmail",
+  "app": "Google (Gmail API)",
+  "website": "https://developers.google.com/workspace/gmail/api",
+  "category": "Email",
+  "summary": "Setup takes about 30 minutes, and your own account can connect in Testing mode the same day. How hard launch is depends on the scope tier. With gmail.send alone (sensitive), you need brand and sensitive-scope verification: free, about 1-3 weeks. Reading, modifying or drafting mail in Gmail (gmail.readonly, gmail.modify, gmail.compose, gmail.metadata) uses restricted scopes. Those add a paid CASA security assessment by an authorized assessor, repeated every 12 months, so allow 4-10+ weeks. For Iskaria: keep drafts inside the app and request only gmail.send.",
+  "verdict": {
+    "difficulty": "hard",
+    "timeToFirstToken": "30 min",
+    "timeToLaunch": "1-10+ weeks",
+    "launchNote": "1-3 weeks with gmail.send only (sensitive); 4-10+ weeks with any restricted Gmail scope (adds CASA).",
+    "reviewRequired": "Brand verification (about 2-3 business days), then sensitive-scope verification (up to about 10 days). Restricted scopes also need restricted-scope review and an annual CASA security assessment with a Letter of Validation from an authorized assessor.",
+    "cost": "Free, or USD 540+/yr",
+    "costNote": "Free for gmail.send only. Restricted scopes: a paid CASA assessment every year, roughly USD 540-1,800 per app per year at the AL1 level (TAC Security lists its Basic AL1 plan at USD 675), and more at AL2.",
+    "evidence": {
+      "status": "sourced",
+      "sourceIds": [
+        "s1",
+        "s2",
+        "s3",
+        "s7"
+      ],
+      "note": "Wait times are Google's stated targets. Real reviews often take longer when the reviewer asks for changes. Cost figures come from the assessor's own price page and community reports, not from Google."
+    }
+  },
+  "testMode": {
+    "available": true,
+    "limits": "Publishing status 'Testing': only the test users you list can sign in, up to 100. They see the 'Google hasn't verified this app' screen (Advanced > Go to <app> (unsafe)). Their authorizations, including refresh tokens, expire 7 days after consent. In production but unverified, the cap is 100 new users over the project's lifetime, and it cannot be reset.",
+    "evidence": {
+      "status": "tested",
+      "sourceIds": [
+        "s4",
+        "s5",
+        "s9",
+        "s13"
+      ],
+      "note": "Iskaria saw the 7-day expiry and the unsafe-link warning itself (2026-10-19), with Search Console and Analytics scopes on the same project type. It has not been tested with Gmail scopes."
+    }
+  },
+  "prerequisites": [
+    {
+      "item": "A Google Cloud project with the Gmail API enabled, and a Google account that is Owner or Editor on it",
+      "requiredFor": "build",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s2"
+        ]
+      }
+    },
+    {
+      "item": "A public homepage on your own domain that describes the app and links to the privacy policy",
+      "profileKey": "homepageUrl",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s14"
+        ]
+      }
+    },
+    {
+      "item": "A privacy policy on the same domain that says how the app accesses, uses, stores and shares Google user data, with a Limited Use compliance statement. Iskaria's current policy has no such section (checked 2026-10-30).",
+      "profileKey": "privacyPolicyUrl",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "s2",
+          "s8",
+          "s13"
+        ],
+        "note": "Iskaria checked its own /privacy on 2026-10-30. The requirement itself comes from Google's docs."
+      }
+    },
+    {
+      "item": "Ownership of every authorized domain verified in Google Search Console, by an account that is Owner or Editor on the project",
+      "profileKey": "domainVerified.googleSearchConsole",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s2"
+        ],
+        "note": "The profile shows iskaria.com verified in Search Console. Make sure the verifying account is also on the Cloud project."
+      }
+    },
+    {
+      "item": "A demo video uploaded to YouTube as Unlisted. Iskaria has none yet (profile demoVideoUrl is null).",
+      "profileKey": "demoVideoUrl",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s3",
+          "s11"
+        ]
+      }
+    },
+    {
+      "item": "A user support email and developer contact emails that get read. A shared mailbox is better than one person's inbox, because annual re-verification emails go there. Iskaria has no shared mailbox yet (sharedSupportMailbox is null).",
+      "profileKey": "supportEmail",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s2"
+        ]
+      }
+    },
+    {
+      "item": "Restricted scopes only: budget and engineering time for a CASA assessment (scan, remediation, Letter of Validation), repeated every 12 months",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s2",
+          "s6",
+          "s7"
+        ]
+      }
+    }
+  ],
+  "steps": [
+    {
+      "title": "Create the Cloud project and enable the Gmail API",
+      "who": "agent-then-you",
+      "phase": "build",
+      "detail": "Create a Google Cloud project, or reuse one that is only for production. Google recommends separate projects for test and production. Enable 'Gmail API' under APIs & Services > Library. An agent with an authenticated gcloud can run `gcloud services enable gmail.googleapis.com`. A human has to sign in first.",
+      "url": "https://console.cloud.google.com/apis/library/gmail.googleapis.com",
+      "estimate": "5 min",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s2"
+        ]
+      }
+    },
+    {
+      "title": "Fill in Branding in Google Auth Platform",
+      "who": "agent-then-you",
+      "phase": "build",
+      "detail": "In Cloud Console, open Menu > Google Auth Platform > Branding. This is the old 'OAuth consent screen'. If you see 'Google Auth platform not configured yet', click Get Started. Enter the app name exactly as it appears on your homepage, plus the support email, logo, homepage, privacy policy, terms, authorized domains and developer contact. Any branding change later sends the app back through brand verification.",
+      "url": "https://console.cloud.google.com/auth/branding",
+      "estimate": "10 min",
+      "fields": [
+        {
+          "label": "App name",
+          "profileKey": "appName"
+        },
+        {
+          "label": "User support email",
+          "profileKey": "supportEmail",
+          "note": "Use a shared mailbox if you have one. Iskaria has none yet."
+        },
+        {
+          "label": "App logo",
+          "profileKey": "logo.square512Png",
+          "note": "Missing: export a square PNG of the Systems Mark. Adding a logo also requires brand verification."
+        },
+        {
+          "label": "Application home page",
+          "profileKey": "homepageUrl"
+        },
+        {
+          "label": "Application privacy policy link",
+          "profileKey": "privacyPolicyUrl"
+        },
+        {
+          "label": "Application terms of service link",
+          "profileKey": "termsUrl"
+        },
+        {
+          "label": "Authorized domains",
+          "profileKey": "authorizedDomains"
+        },
+        {
+          "label": "Developer contact information",
+          "profileKey": "developerContactEmail"
+        }
+      ],
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "s10",
+          "s13"
+        ],
+        "note": "Iskaria completed this screen on its own project on 2026-10-19. The menu path is from Google's Workspace guide."
+      }
+    },
+    {
+      "title": "Set Audience to External, Testing, and add test users",
+      "who": "you",
+      "phase": "build",
+      "detail": "Under Audience, choose External, because clinic mailboxes sit outside your Workspace organization. Leave the publishing status as Testing. Under Test users, click Add users, add your own account and up to 99 more, then save.",
+      "url": "https://console.cloud.google.com/auth/audience",
+      "estimate": "3 min",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "s4",
+          "s10",
+          "s13"
+        ]
+      }
+    },
+    {
+      "title": "Declare the narrowest Gmail scopes under Data Access",
+      "who": "agent-then-you",
+      "phase": "build",
+      "detail": "Under Data Access, click Add or remove scopes and add only what the feature needs. To send follow-ups composed in your own app, add gmail.send (sensitive). Each restricted scope you add (gmail.readonly, gmail.compose, gmail.modify, gmail.metadata) brings CASA with it. The console sorts each scope as non-sensitive, sensitive or restricted, so check the tier there before you commit to a design.",
+      "url": "https://console.cloud.google.com/auth/scopes",
+      "estimate": "5 min",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s1",
+          "s2"
+        ]
+      }
+    },
+    {
+      "title": "Create the OAuth client",
+      "who": "agent-then-you",
+      "phase": "build",
+      "detail": "Under Clients, click Create client and choose 'Web application' for the console's server flow. Add the authorized redirect URIs. Store the client secret server-side only. Use your own client: Google blocks gcloud's built-in client for some Google APIs ('This app is blocked').",
+      "url": "https://console.cloud.google.com/auth/clients",
+      "estimate": "5 min",
+      "fields": [
+        {
+          "label": "Authorized redirect URIs",
+          "profileKey": "redirectUris",
+          "note": "Replace {provider} with the real path segment, e.g. gmail"
+        },
+        {
+          "label": "Authorized JavaScript origins",
+          "profileKey": "appDomain"
+        }
+      ],
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "s13"
+        ],
+        "note": "Iskaria created a Desktop client and saw the gcloud block with Analytics and Search Console scopes. It has not been tested with Gmail."
+      }
+    },
+    {
+      "title": "Test the login with a test user",
+      "who": "agent-then-you",
+      "phase": "test",
+      "detail": "Run the authorization flow with access_type=offline so that you get a refresh token. The test user sees 'Google hasn't verified this app' and must click Advanced > Go to <app> (unsafe). Expect to repeat the login every 7 days while the app is in Testing, because the refresh token expires.",
+      "estimate": "10 min",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "s5",
+          "s13"
+        ]
+      }
+    },
+    {
+      "title": "Add a Google user data and Limited Use section to the privacy policy",
+      "who": "agent-then-you",
+      "phase": "launch",
+      "detail": "On iskaria.com/privacy, state which Gmail data is accessed and why, how it is stored and shared, and how to revoke access or delete it. Add the Limited Use statement, e.g. '<App>'s use and transfer of information received from Google APIs will adhere to the Google API Services User Data Policy, including the Limited Use requirements.' Also state that Workspace data is not used to train generalized AI/ML models. An agent can draft this. A human approves it and publishes it on the domain.",
+      "url": "https://developers.google.com/terms/api-services-user-data-policy",
+      "estimate": "1-2 h",
+      "fields": [
+        {
+          "label": "Privacy policy URL",
+          "profileKey": "privacyPolicyUrl",
+          "note": "Iskaria's policy has no such section yet (checked 2026-10-30)."
+        }
+      ],
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s8",
+          "s15"
+        ]
+      }
+    },
+    {
+      "title": "Record the demo video and upload it to YouTube as Unlisted",
+      "who": "you",
+      "phase": "launch",
+      "detail": "Record in English. Show the full consent flow with the app name and the client ID in the browser address bar. Then show each Gmail scope being used inside the app, for example sending a follow-up. Narration helps the reviewer. Make sure the video is Unlisted, not Private: a private video stalls the review.",
+      "estimate": "1-2 h",
+      "fields": [
+        {
+          "label": "YouTube link",
+          "profileKey": "demoVideoUrl",
+          "note": "Missing in the Iskaria profile"
+        }
+      ],
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s3",
+          "s11"
+        ]
+      }
+    },
+    {
+      "title": "Publish the app and submit it for verification",
+      "who": "you",
+      "phase": "launch",
+      "detail": "Under Audience, click Publish app. Then open Verification Center and submit. Brand verification runs first (about 2-3 business days), then the scope review. In the submission, justify each scope against a user-facing feature. Reviewers reply by email to the developer contact addresses, and work stops until you answer.",
+      "url": "https://console.cloud.google.com/auth/verification",
+      "estimate": "30 min hands-on, then 3-10+ days of waiting",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s2",
+          "s3"
+        ]
+      }
+    },
+    {
+      "title": "Restricted scopes only: pass the CASA security assessment",
+      "who": "you",
+      "phase": "launch",
+      "detail": "Once the restricted-scope review reaches the assessment stage, Google Trust & Safety tells you to start CASA. Pick an authorized assessor from the App Defense Alliance list (TAC Security is one) and pay. The assessor runs the scan and questionnaire. You fix the findings, and the assessor sends Google a Letter of Validation. Your app is placed at AL1 or AL2. Repeat this every 12 months.",
+      "url": "https://appdefensealliance.dev/casa",
+      "estimate": "2-4 weeks calendar, several days of engineering",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s2",
+          "s6",
+          "s7",
+          "s12"
+        ],
+        "note": "Process from Google's docs. Durations and prices come from the assessor and community sources."
+      }
+    }
+  ],
+  "scopes": [
+    {
+      "name": "https://www.googleapis.com/auth/gmail.send",
+      "purpose": "Send patient follow-up emails from the clinic's mailbox. Drafts are written and stored in Iskaria.",
+      "tier": "sensitive",
+      "note": "This is the only Gmail scope that both sends mail and avoids CASA. Iskaria's use case needs nothing more.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s1"
+        ]
+      }
+    },
+    {
+      "name": "https://www.googleapis.com/auth/gmail.compose",
+      "purpose": "Create drafts in the clinic's Gmail so staff can review them there before sending",
+      "tier": "restricted",
+      "note": "Easy to mistake for a light scope, but it is restricted and triggers CASA",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s1"
+        ]
+      }
+    },
+    {
+      "name": "https://www.googleapis.com/auth/gmail.readonly",
+      "purpose": "Read patient replies so the assistant can answer or log them",
+      "tier": "restricted",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s1"
+        ]
+      }
+    },
+    {
+      "name": "https://www.googleapis.com/auth/gmail.modify",
+      "purpose": "Read, label and archive threads and send, all without permanent delete",
+      "tier": "restricted",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s1"
+        ]
+      }
+    },
+    {
+      "name": "https://www.googleapis.com/auth/gmail.metadata",
+      "purpose": "Headers and labels only (who wrote, when), without the message body",
+      "tier": "restricted",
+      "note": "Also restricted. There is no 'light read' Gmail scope.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s1"
+        ]
+      }
+    },
+    {
+      "name": "https://www.googleapis.com/auth/gmail.labels",
+      "purpose": "Create and apply an 'Iskaria' label",
+      "tier": "basic",
+      "note": "Non-sensitive",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s1"
+        ]
+      }
+    }
+  ],
+  "blockers": [
+    {
+      "title": "Any read or draft scope means a paid security assessment every year",
+      "detail": "gmail.readonly, gmail.modify, gmail.compose and gmail.metadata are restricted. If restricted-scope data reaches or passes through your server, you need a CASA assessment from an authorized assessor, repeated at least every 12 months after the Letter of Assessment date. Miss the renewal and you lose access to the scopes.",
+      "severity": "can-block-launch",
+      "workaround": "Design for gmail.send only: draft in Iskaria and send through Gmail. Add read scopes later, as their own verification round.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s2",
+          "s6"
+        ]
+      }
+    },
+    {
+      "title": "Privacy policy lacks a Google user data / Limited Use section",
+      "detail": "Brand and scope verification check that the policy explains how Google user data is accessed, used, stored and shared, and that it states Limited Use compliance. Iskaria's /privacy has none of this today.",
+      "severity": "can-block-launch",
+      "workaround": "Add the section before you submit (see the step above)",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "s2",
+          "s8",
+          "s13"
+        ]
+      }
+    },
+    {
+      "title": "No demo video yet",
+      "detail": "Sensitive and restricted verification both need an Unlisted YouTube video of the consent flow and of each scope in use. A wrong visibility setting or missing English consent screen stalls the review.",
+      "severity": "can-block-launch",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s3",
+          "s11"
+        ]
+      }
+    },
+    {
+      "title": "Testing mode is weekly re-login, and the user cap never resets",
+      "detail": "In Testing, refresh tokens die after 7 days, so a pilot clinic has to re-consent every week. An unverified production app is limited to 100 new users over the project's lifetime.",
+      "severity": "slows-you-down",
+      "workaround": "Keep pilots on a separate test project. Submit for verification early.",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "s4",
+          "s5",
+          "s9",
+          "s13"
+        ]
+      }
+    },
+    {
+      "title": "Brand changes restart brand verification",
+      "detail": "Changing the app name, logo, homepage or domain after approval sends you back through the 2-3 day brand check, and the app name must match the homepage.",
+      "severity": "slows-you-down",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s2"
+        ]
+      }
+    },
+    {
+      "title": "Using Gmail data for AI training is prohibited",
+      "detail": "The Workspace policy forbids using Workspace user data to create, train or improve AI/ML models beyond that user's own personalized model. An AI assistant that reads mail must not feed it into shared fine-tuning.",
+      "severity": "info",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s8"
+        ]
+      }
+    }
+  ],
+  "agentHandoff": {
+    "agentCan": [
+      "Enable the Gmail API and draft every Branding field from the profile",
+      "Choose the narrowest scope set and write the per-scope justifications",
+      "Implement the OAuth web flow, token storage and the 7-day test re-login",
+      "Draft the privacy-policy Google user data / Limited Use section",
+      "Write the demo-video script and shot list",
+      "Prepare for CASA: run a self scan and fix findings before the assessor's scan"
+    ],
+    "youMust": [
+      "Sign in to Cloud Console and own the project (Owner/Editor)",
+      "Click through the unverified-app warning as a test user",
+      "Approve and publish the privacy-policy change",
+      "Record and upload the demo video",
+      "Publish the app, submit it for verification and answer reviewer emails",
+      "Choose and pay a CASA assessor, every year, if any restricted scope is used"
+    ]
+  },
+  "uncertainties": [
+    "Real review durations: Google states 2-3 business days for brand, up to 10 days for sensitive and 'several weeks' for restricted. Community reports range from days to more than 2 months when there are follow-up rounds.",
+    "CASA pricing and options: Google publishes no price. The figures come from TAC Security's page and blogs. Community posts (2026) say the free self-scan route for Tier 2 is gone and every option is paid. We could not confirm that on an official Google page.",
+    "Whether a send-only server needs CASA: the restricted-scope rules apply to restricted scopes only, so gmail.send alone should not need it. We did not test a Gmail verification ourselves.",
+    "Iskaria's own setup was tested with Search Console and Analytics scopes, not Gmail. The Gmail-specific steps are sourced, not tested."
+  ],
+  "sources": [
+    {
+      "id": "s1",
+      "title": "Choose Gmail API scopes",
+      "url": "https://developers.google.com/workspace/gmail/api/auth/scopes",
+      "kind": "official-docs",
+      "quote": "Send email on your behalf.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s2",
+      "title": "Restricted scope verification",
+      "url": "https://developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification",
+      "kind": "official-docs",
+      "quote": "complete a security assessment at least every 12 months after your assessor's Letter of Assessment (LOA) approval date",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s3",
+      "title": "Sensitive scope verification",
+      "url": "https://developers.google.com/identity/protocols/oauth2/production-readiness/sensitive-scope-verification",
+      "kind": "official-docs",
+      "quote": "The sensitive scope verification process can take up to 10 days to complete.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s4",
+      "title": "Manage App Audience (Google Cloud Help)",
+      "url": "https://support.google.com/cloud/answer/15549945",
+      "kind": "official-docs",
+      "quote": "limited to up to 100 test users listed in the OAuth consent screen",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s5",
+      "title": "Using OAuth 2.0 to Access Google APIs",
+      "url": "https://developers.google.com/identity/protocols/oauth2",
+      "kind": "official-docs",
+      "quote": "a publishing status of \"Testing\" is issued a refresh token expiring in 7 days",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s6",
+      "title": "Security Assessment (Google Cloud Help)",
+      "url": "https://support.google.com/cloud/answer/13465431",
+      "kind": "official-docs",
+      "quote": "All applications must be revalidated every year.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s7",
+      "title": "TAC Security ESOF AppSec ADA CASA plans",
+      "url": "https://casa.tacsecurity.com/",
+      "kind": "community",
+      "quote": "Assessment to LoV in 2-3 Weeks",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s8",
+      "title": "Google Workspace user data and developer policy",
+      "url": "https://developers.google.com/workspace/workspace-api-user-data-developer-policy",
+      "kind": "provider-policy",
+      "quote": "The use of information received from Google Workspace scopes will adhere to the Google User Data Policy",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s9",
+      "title": "Unverified apps (Google Cloud Help)",
+      "url": "https://support.google.com/cloud/answer/7454865",
+      "kind": "official-docs",
+      "quote": "100 new users in total, after the app presents the unverified app screen",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s10",
+      "title": "Configure the OAuth consent screen (Google Workspace)",
+      "url": "https://developers.google.com/workspace/guides/configure-oauth-consent",
+      "kind": "official-docs",
+      "quote": "Google Auth platform",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s11",
+      "title": "Demo Video (Google Cloud Help)",
+      "url": "https://support.google.com/cloud/answer/13804565",
+      "kind": "official-docs",
+      "quote": "The end-to-end flow of your app including the OAuth grant process.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s12",
+      "title": "freehire: Google OAuth verification notes",
+      "url": "https://github.com/strelov1/freehire/blob/19dec971fcbdb81b2172f10b894e507233cabf40/docs/google-oauth-verification.md",
+      "kind": "community",
+      "quote": "The free self-scan tier is gone.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s13",
+      "title": "Iskaria's own setup, 2026-10-19",
+      "url": "https://iskaria.com/",
+      "kind": "our-test",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s14",
+      "title": "Verification requirements (Google Cloud Help)",
+      "url": "https://support.google.com/cloud/answer/13464321",
+      "kind": "official-docs",
+      "quote": "submitting to an annual security assessment from a Google empanelled group of security assessors",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s15",
+      "title": "Google API Services User Data Policy",
+      "url": "https://developers.google.com/terms/api-services-user-data-policy",
+      "kind": "provider-policy",
+      "quote": "All other transfers, uses, or sales of user data are prohibited",
+      "accessed": "2026-10-30"
+    }
+  ],
+  "meta": {
+    "generatedBy": "seed-research",
+    "generatedAt": "2026-10-30",
+    "verification": [
+      {
+        "claim": "gmail.send is sensitive. gmail.compose, gmail.readonly, gmail.modify and gmail.metadata are restricted. gmail.labels is non-sensitive.",
+        "method": "Fetched the live Gmail API scopes page (s1) on 2026-10-30",
+        "result": "confirmed",
+        "note": "gmail.compose is often assumed to be a light scope. It is restricted."
+      },
+      {
+        "claim": "The consent screen setup now lives in 'Google Auth Platform' (Branding / Audience / Data Access / Clients)",
+        "method": "Workspace configure-consent guide (s10) plus Iskaria's own console session",
+        "result": "confirmed",
+        "note": "Older guides still say 'APIs & Services > OAuth consent screen'"
+      },
+      {
+        "claim": "Common claim: sensitive-scope review takes 3-5 business days",
+        "method": "Google's sensitive-scope page (s3)",
+        "result": "corrected",
+        "note": "Google now says 'up to 10 days'. Brand verification alone is 2-3 business days (s2)."
+      },
+      {
+        "claim": "Common claim: CASA has a free Tier 2 self-scan and Tier 3 lab audits",
+        "method": "Google Security Assessment help (s6), TAC price page (s7), 2026 community notes (s12)",
+        "result": "corrected",
+        "note": "Google now assigns AL1 or AL2 assurance levels. Community sources (2026) say the free self-scan is gone. Google's page does not mention price."
+      },
+      {
+        "claim": "Testing-mode refresh tokens expire after 7 days",
+        "method": "OAuth 2.0 overview (s5) and Iskaria's own weekly re-logins (s13)",
+        "result": "confirmed"
+      }
+    ]
+  }
+}

@@ -1,0 +1,587 @@
+{
+  "slug": "github",
+  "app": "GitHub (GitHub App / OAuth App)",
+  "website": "https://github.com",
+  "category": "Dev tools",
+  "summary": "Easy: register a GitHub App in Developer settings in about 15 minutes, no review for any user to install it. The real decision is GitHub App (fine-grained, per-repository permissions, 1-hour installation tokens, recommended by GitHub) versus OAuth App (broad `repo` scope, blocked by default in new organizations until an owner approves). The main friction is organizational: only org owners (or repo admins, for their repos) can install a GitHub App, so members must request it.",
+  "verdict": {
+    "difficulty": "easy",
+    "timeToFirstToken": "15 min",
+    "timeToLaunch": "Same day",
+    "launchNote": "same day (no review); org installs wait on each org owner's approval.",
+    "reviewRequired": "none; the GitHub Marketplace listing is optional and has its own requirements (privacy policy, support link; paid plans need a verified-publisher org and 100+ installations)",
+    "cost": "Free",
+    "evidence": {
+      "status": "sourced",
+      "sourceIds": [
+        "g1",
+        "g2",
+        "g8",
+        "g9"
+      ],
+      "note": "No doc states 'no review'; registration docs describe no approval step and the app is usable on creation. Marketplace is framed as an optional way to share."
+    }
+  },
+  "testMode": {
+    "available": true,
+    "limits": "No separate test mode. Set 'Where can this GitHub App be installed?' to 'Only on this account' while testing, then switch to 'Any account' to let other users and orgs install it.",
+    "evidence": {
+      "status": "sourced",
+      "sourceIds": [
+        "g1"
+      ]
+    }
+  },
+  "prerequisites": [
+    {
+      "item": "A GitHub account (personal, or an organization you own) to own the app. Prefer an organization so the app is not tied to one person and so paid Marketplace plans stay possible later.",
+      "requiredFor": "build",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "g1",
+          "g8"
+        ]
+      }
+    },
+    {
+      "item": "Homepage URL",
+      "profileKey": "homepageUrl",
+      "requiredFor": "build",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "g1"
+        ]
+      }
+    },
+    {
+      "item": "Callback URL for user authorization (https://app.iskaria.com/api/oauth/github/callback from the profile's redirectUris pattern)",
+      "profileKey": "redirectUris",
+      "requiredFor": "build",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "g1"
+        ]
+      }
+    },
+    {
+      "item": "A public HTTPS webhook endpoint and a webhook secret, if the agent should react to issue/PR events. MISSING from the profile: no webhook URL is defined.",
+      "requiredFor": "build",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "g1"
+        ]
+      }
+    },
+    {
+      "item": "Privacy policy and support link (only for a Marketplace listing)",
+      "profileKey": "privacyPolicyUrl",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "g9"
+        ]
+      }
+    },
+    {
+      "item": "App logo (optional for a GitHub App; useful for the install screen and Marketplace). MISSING: the profile has no exported square PNG.",
+      "profileKey": "logo",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "inferred",
+        "sourceIds": [],
+        "note": "Logo upload happens after registration on the app settings page; not checked in the docs fetched this session."
+      }
+    }
+  ],
+  "steps": [
+    {
+      "title": "Choose GitHub App over OAuth App",
+      "who": "you",
+      "phase": "build",
+      "detail": "For an agent that opens issues and PRs on users' repos, register a GitHub App. It gets fine-grained permissions, the installer picks which repositories it can touch, installation tokens expire after 1 hour, and it can act as a bot (e.g. iskaria[bot]) or on behalf of a user via user-to-server tokens. An OAuth App only has broad scopes such as `repo` (all public and private repos of the user) and is blocked by default in new organizations. Pick OAuth App only if you need to act strictly as the user across everything they can access.",
+      "estimate": "5 min",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "g2",
+          "g11",
+          "g4",
+          "g3"
+        ],
+        "note": "OAuth App form (g3): Application name, Homepage URL, Application description, Authorization callback URL (up to 10), Enable Device Flow, Expire user access tokens (on by default)."
+      }
+    },
+    {
+      "title": "Open the GitHub App registration form",
+      "who": "you",
+      "phase": "build",
+      "detail": "Profile picture > Settings (for an org: Your organizations > the org > Settings) > Developer settings > GitHub Apps > New GitHub App. Requires being logged in, so a human starts here; an agent can fill the form once it is open.",
+      "url": "https://github.com/settings/apps/new",
+      "estimate": "1 min",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "g1"
+        ],
+        "note": "Deep link is GitHub's standard settings path; the docs give the click path."
+      }
+    },
+    {
+      "title": "Fill in identity and user-authorization fields",
+      "who": "agent-then-you",
+      "phase": "build",
+      "detail": "Enter the name (max 34 characters, unique across GitHub), description, homepage and callback URL. Keep 'Expire user authorization tokens' selected (8-hour user tokens with refresh tokens). Select 'Request user authorization (OAuth) during installation' so install and sign-in happen in one flow. Leave Device Flow off unless a CLI needs it.",
+      "estimate": "5 min",
+      "fields": [
+        {
+          "label": "GitHub App name",
+          "profileKey": "appName",
+          "note": "Max 34 characters, unique across GitHub; 'Iskaria' may be taken, fall back to e.g. 'Iskaria Agent'."
+        },
+        {
+          "label": "Description",
+          "profileKey": "appDescription",
+          "note": "Shown to users when they install the app; tailor to useCases.github (opens issues/PRs from voice-note tasks)."
+        },
+        {
+          "label": "Homepage URL",
+          "profileKey": "homepageUrl"
+        },
+        {
+          "label": "Callback URL",
+          "profileKey": "redirectUris",
+          "note": "https://app.iskaria.com/api/oauth/github/callback; add the localhost one for development. Multiple callback URLs are allowed."
+        },
+        {
+          "label": "Expire user authorization tokens",
+          "note": "Leave checked (default)."
+        },
+        {
+          "label": "Request user authorization (OAuth) during installation",
+          "note": "Check it so a user-to-server token is issued at install."
+        },
+        {
+          "label": "Enable Device Flow",
+          "note": "Leave unchecked for a web console."
+        }
+      ],
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "g1",
+          "g2"
+        ]
+      }
+    },
+    {
+      "title": "Set the post-install redirect",
+      "who": "agent",
+      "phase": "build",
+      "detail": "Setup URL: where GitHub sends the user after installing (it receives installation_id). If 'Request user authorization during installation' is checked, GitHub uses the Callback URL instead and the Setup URL is not available. Optionally check 'Redirect on update'.",
+      "estimate": "2 min",
+      "fields": [
+        {
+          "label": "Setup URL",
+          "note": "Not in the profile; e.g. https://app.iskaria.com/settings/integrations/github. Skip if user authorization during installation is on."
+        },
+        {
+          "label": "Redirect on update"
+        }
+      ],
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "g1"
+        ],
+        "note": "The interaction between Setup URL and user-authorization-during-install is from prior knowledge of the form, not re-checked this session."
+      }
+    },
+    {
+      "title": "Configure the webhook",
+      "who": "agent-then-you",
+      "phase": "build",
+      "detail": "Webhook Active is on by default. Enter the public HTTPS endpoint and a random secret (generate it, store server-side, verify X-Hub-Signature-256). Deselect Active if the agent only acts on demand and never listens for events. Then pick events under 'Subscribe to events' (e.g. Issues, Issue comment, Pull request).",
+      "estimate": "5 min",
+      "fields": [
+        {
+          "label": "Webhook Active",
+          "note": "Uncheck if no events are needed."
+        },
+        {
+          "label": "Webhook URL",
+          "note": "MISSING from profile; e.g. https://app.iskaria.com/api/webhooks/github."
+        },
+        {
+          "label": "Webhook secret",
+          "note": "Generate; never commit it."
+        },
+        {
+          "label": "Subscribe to events"
+        }
+      ],
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "g1"
+        ]
+      }
+    },
+    {
+      "title": "Choose permissions",
+      "who": "agent-then-you",
+      "phase": "build",
+      "detail": "Repository permissions: Issues Read & write, Pull requests Read & write, Contents Read & write (to push the branch a PR is opened from); Metadata Read-only is added automatically. No organization or account permissions. Request the minimum: adding permissions later forces every installation owner to approve them, and installations that decline keep the old set.",
+      "estimate": "5 min",
+      "fields": [
+        {
+          "label": "Permissions",
+          "note": "Each permission: Read-only, Read & write, or No access. See scopes."
+        }
+      ],
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "g1",
+          "g10"
+        ]
+      }
+    },
+    {
+      "title": "Set who can install it and create the app",
+      "who": "you",
+      "phase": "build",
+      "detail": "'Where can this GitHub App be installed?': 'Only on this account' while testing, 'Any account' to let clinics/users install it. Click Create GitHub App.",
+      "estimate": "1 min",
+      "fields": [
+        {
+          "label": "Where can this GitHub App be installed?",
+          "note": "Only on this account / Any account."
+        }
+      ],
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "g1"
+        ]
+      }
+    },
+    {
+      "title": "Generate credentials and store them server-side",
+      "who": "you",
+      "phase": "build",
+      "detail": "On the app page note the App ID and Client ID, generate a client secret and a private key (.pem). Store them in server env (Vercel), never in the repo or browser. The server signs a JWT with the private key to mint 1-hour installation tokens.",
+      "estimate": "5 min",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "g2"
+        ],
+        "note": "1-hour installation token lifetime is sourced; the credential page layout is from prior knowledge."
+      }
+    },
+    {
+      "title": "Install on your own account and test",
+      "who": "you",
+      "phase": "test",
+      "detail": "Install the app on your account or org, choose 'Only select repositories', and run the flow: mint an installation token, create an issue, push a branch and open a PR. Watch rate-limit headers.",
+      "estimate": "15 min",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "g5",
+          "g7"
+        ]
+      }
+    },
+    {
+      "title": "Make it public and handle org installs",
+      "who": "you",
+      "phase": "launch",
+      "detail": "Switch to 'Any account'. Share the public install link. In organizations, only owners can install on the whole org; repo admins can install on repos they administer if the app requests no organization permissions; other members can only request, which emails the owner. Optional: list on GitHub Marketplace (privacy policy, support link; paid plans need a verified-publisher org and 100+ installations).",
+      "estimate": "10 min",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "g5",
+          "g6",
+          "g9"
+        ]
+      }
+    }
+  ],
+  "scopes": [
+    {
+      "name": "Issues: Read & write",
+      "purpose": "Open issues from voice-note tasks and comment on them",
+      "tier": "basic",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "g1"
+        ]
+      }
+    },
+    {
+      "name": "Pull requests: Read & write",
+      "purpose": "Open and update PRs",
+      "tier": "basic",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "g1"
+        ]
+      }
+    },
+    {
+      "name": "Contents: Read & write",
+      "purpose": "Create branches and commits that the PR is opened from",
+      "tier": "basic",
+      "note": "The broadest of the three; drop it if the agent only files issues.",
+      "evidence": {
+        "status": "inferred",
+        "sourceIds": [
+          "g10"
+        ],
+        "note": "Exact permission names come from GitHub's permission list, not fetched this session."
+      }
+    },
+    {
+      "name": "Metadata: Read-only",
+      "purpose": "List repositories and basic repo info",
+      "tier": "basic",
+      "note": "Added automatically when any repository permission is selected.",
+      "evidence": {
+        "status": "inferred",
+        "sourceIds": [],
+        "note": "Mandatory-metadata behaviour is prior knowledge; the permissions page fetched says only that apps have no permissions by default."
+      }
+    },
+    {
+      "name": "repo (OAuth App alternative)",
+      "purpose": "Only if you choose an OAuth App: needed to open issues/PRs on private repos",
+      "tier": "basic",
+      "note": "Grants full access to all of the user's public and private repositories; cannot be narrowed per repo. `public_repo` if only public repos.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "g11",
+          "g2"
+        ]
+      }
+    }
+  ],
+  "blockers": [
+    {
+      "title": "Org members cannot install the app themselves",
+      "detail": "Only organization owners can install a GitHub App on an org (repo admins only on their repos, and only if no organization permissions are requested). A member's attempt sends a request email to the owner and waits.",
+      "severity": "slows-you-down",
+      "workaround": "Request only repository permissions so repo admins can install; tell users up front that an org owner may need to approve.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "g5",
+          "g6"
+        ]
+      }
+    },
+    {
+      "title": "OAuth Apps are blocked by default in new organizations",
+      "detail": "OAuth app access restrictions are enabled by default for new orgs: members cannot authorize an OAuth App to org resources until an owner approves it. GitHub Apps are not subject to these OAuth app policies.",
+      "severity": "can-block-launch",
+      "workaround": "Use a GitHub App.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "g4",
+          "g2"
+        ]
+      }
+    },
+    {
+      "title": "Content-creation secondary rate limits",
+      "detail": "Installation tokens get 5,000 requests/hour, +50 per repo above 20, capped at 12,500 (15,000 on Enterprise Cloud). Separately, secondary limits allow at most 80 content-generating requests per minute and 500 per hour, and 900 REST points per minute (writes cost 5 points). An agent opening many issues/comments in bursts hits these first.",
+      "severity": "slows-you-down",
+      "workaround": "Queue writes, respect Retry-After and x-ratelimit headers, batch comments.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "g7"
+        ]
+      }
+    },
+    {
+      "title": "Adding permissions later needs every installer's re-approval",
+      "detail": "When you add permissions, each installation owner is prompted; installations that do not approve keep the old permissions, so features silently fail for them.",
+      "severity": "slows-you-down",
+      "workaround": "Decide the permission set before launch; check granted permissions at runtime.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "g10"
+        ]
+      }
+    },
+    {
+      "title": "Name is first-come, max 34 characters",
+      "detail": "The app name must be unique across GitHub and at most 34 characters; a short brand name may already be taken.",
+      "severity": "info",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "g1"
+        ]
+      }
+    }
+  ],
+  "agentHandoff": {
+    "agentCan": [
+      "Fill every registration field from the profile (name, description, homepage, callback URL, webhook URL, permissions, install target)",
+      "Generate the webhook secret and write the env-var wiring",
+      "Implement JWT signing, installation-token minting, user-token refresh and webhook signature verification",
+      "Run the test flow (issue, branch, PR) on a test repo once the app is installed"
+    ],
+    "youMust": [
+      "Log in to GitHub and open the New GitHub App form (2FA, owner of the org)",
+      "Click Create GitHub App, then generate and download the private key and client secret",
+      "Install the app on your account/org and pick repositories",
+      "Get org owners to install or approve the app in their organizations",
+      "Accept the Marketplace Developer Agreement if you choose to list"
+    ]
+  },
+  "uncertainties": [
+    "Exact repository-permission names (Issues, Pull requests, Contents, Metadata) and the auto-added Metadata permission were not re-checked against GitHub's permission reference this session.",
+    "Whether the Setup URL field is disabled when 'Request user authorization (OAuth) during installation' is checked is from prior knowledge of the form.",
+    "GitHub documents no Marketplace review timeline.",
+    "Logo upload location (app settings after creation) was not checked."
+  ],
+  "sources": [
+    {
+      "id": "g1",
+      "title": "Registering a GitHub App",
+      "url": "https://docs.github.com/en/apps/creating-github-apps/registering-a-github-app/registering-a-github-app",
+      "kind": "official-docs",
+      "quote": "The name cannot be longer than 34 characters.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "g2",
+      "title": "Differences between GitHub Apps and OAuth apps",
+      "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/differences-between-github-apps-and-oauth-apps",
+      "kind": "official-docs",
+      "quote": "In general, GitHub Apps are preferred over OAuth apps.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "g3",
+      "title": "Creating an OAuth app",
+      "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app",
+      "kind": "official-docs",
+      "quote": "You can enter up to 10 callback URLs",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "g4",
+      "title": "About OAuth app access restrictions",
+      "url": "https://docs.github.com/en/organizations/managing-oauth-access-to-your-organizations-data/about-oauth-app-access-restrictions",
+      "kind": "official-docs",
+      "quote": "When you create a new organization, OAuth app access restrictions are enabled by default.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "g5",
+      "title": "Installing a GitHub App from a third party",
+      "url": "https://docs.github.com/en/apps/using-github-apps/installing-a-github-app-from-a-third-party",
+      "kind": "official-docs",
+      "quote": "Organization owners can install GitHub Apps on their organization.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "g6",
+      "title": "Requesting a GitHub App from your organization owner",
+      "url": "https://docs.github.com/en/apps/using-github-apps/requesting-a-github-app-from-your-organization-owner",
+      "kind": "official-docs",
+      "quote": "Organization members can request installation of a GitHub App for their organization.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "g7",
+      "title": "Rate limits for the REST API",
+      "url": "https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api",
+      "kind": "official-docs",
+      "quote": "The rate limit cannot increase beyond 12,500 requests per hour.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "g8",
+      "title": "About GitHub Marketplace for apps",
+      "url": "https://docs.github.com/en/apps/github-marketplace/github-marketplace-overview/about-github-marketplace-for-apps",
+      "kind": "official-docs",
+      "quote": "only apps owned by organizations can sell their app",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "g9",
+      "title": "Requirements for listing an app",
+      "url": "https://docs.github.com/en/apps/github-marketplace/creating-apps-for-github-marketplace/requirements-for-listing-an-app",
+      "kind": "provider-policy",
+      "quote": "GitHub Apps should have a minimum of 100 installations.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "g10",
+      "title": "Choosing permissions for a GitHub App",
+      "url": "https://docs.github.com/en/apps/creating-github-apps/registering-a-github-app/choosing-permissions-for-a-github-app",
+      "kind": "official-docs",
+      "quote": "You should select the minimum permissions required for the app.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "g11",
+      "title": "Scopes for OAuth apps",
+      "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/scopes-for-oauth-apps",
+      "kind": "official-docs",
+      "quote": "Grants full access to public and private repositories",
+      "accessed": "2026-10-30"
+    }
+  ],
+  "meta": {
+    "generatedBy": "seed-research",
+    "generatedAt": "2026-10-30",
+    "verification": [
+      {
+        "claim": "GitHub App registration form field names (GitHub App name, Description, Homepage URL, Callback URL, Expire user authorization tokens, Request user authorization (OAuth) during installation, Enable Device Flow, Setup URL, Webhook Active/URL/secret, Permissions, Where can this GitHub App be installed?)",
+        "method": "Fetched the live 'Registering a GitHub App' doc",
+        "result": "confirmed",
+        "note": "Also lists 'Redirect on update' and 'Subscribe to events', added to the steps."
+      },
+      {
+        "claim": "OAuth Apps allow only one callback URL and issue non-expiring tokens",
+        "method": "Fetched 'Creating an OAuth app'",
+        "result": "corrected",
+        "note": "The form now accepts up to 10 callback URLs and has an 'Expire user access tokens' checkbox enabled by default."
+      },
+      {
+        "claim": "Installing a GitHub App in an org needs org owner approval",
+        "method": "Fetched 'Installing a GitHub App from a third party' and 'Requesting a GitHub App from your organization owner'",
+        "result": "corrected",
+        "note": "Owners install directly; repo admins can install on their own repos when the app requests no org permissions; only other members need to request. OAuth app access restrictions (on by default in new orgs) do not apply to GitHub Apps."
+      },
+      {
+        "claim": "Installation token rate limit 5,000/h scaling to 12,500 (15,000 on Enterprise Cloud)",
+        "method": "Fetched REST rate-limit doc; the GitHub Apps rate-limit page gives no numbers and links there",
+        "result": "confirmed"
+      },
+      {
+        "claim": "No review is needed to make a GitHub App public",
+        "method": "Read the registration and Marketplace docs for any approval step",
+        "result": "unverified",
+        "note": "No doc says so explicitly; none describes a review outside the optional Marketplace."
+      }
+    ]
+  }
+}

@@ -1,0 +1,614 @@
+{
+  "slug": "linkedin",
+  "app": "LinkedIn (Community Management API for Company Page posting)",
+  "website": "https://www.linkedin.com/developers/",
+  "category": "Social",
+  "summary": "Sign In with LinkedIn (OpenID Connect) and Share on LinkedIn (w_member_social, posting as a person) are self-serve and work within minutes. Posting as a Company Page needs w_organization_social, and that only comes with the vetted Community Management API. Access is limited to registered legal organizations with a business email, and the app must be verified by the super admin of your LinkedIn Page. You get a rate-limited Development tier first, then apply for Standard tier with a screencast. LinkedIn publishes no review time; plan on weeks, and a rejection means starting over with a new app.",
+  "verdict": {
+    "difficulty": "gated",
+    "timeToFirstToken": "15 min (personal only)",
+    "timeToLaunch": "4-10 weeks",
+    "launchNote": "First token: 15 min for openid/profile/email + w_member_social (personal posts); Company Page posting has no first token until Development tier is approved. 4-10 weeks (Development tier vetting reported at 1-3+ weeks, then build, then Standard tier review with screencast); no official SLA.",
+    "reviewRequired": "Community Management API Development tier access form (legal org, business email, Page-verified app, approved use case), then Standard tier access form with screencast, test credentials and privacy policy review",
+    "cost": "Free",
+    "costNote": "free (no license or per-call fee)",
+    "evidence": {
+      "status": "sourced",
+      "sourceIds": [
+        "l1",
+        "l2",
+        "l3",
+        "l4",
+        "l10"
+      ],
+      "note": "The time range is anecdotal: LinkedIn documents no review time; a 2026 Q&A post cites a '10-14 business days' portal message for Development tier."
+    }
+  },
+  "testMode": {
+    "available": true,
+    "limits": "Before approval only the open permissions work (openid, profile, email, w_member_social: posting as yourself, not as a Page). Development tier: 500 calls per app and 100 per member per 24 h, no BATCH_GET, social-action webhooks disabled. Integration must be finished within 12 months. Access tokens last 60 days; programmatic refresh tokens are partner-only.",
+    "evidence": {
+      "status": "sourced",
+      "sourceIds": [
+        "l1",
+        "l2",
+        "l3",
+        "l7"
+      ]
+    }
+  },
+  "prerequisites": [
+    {
+      "item": "A LinkedIn Company Page for the developer's organization, with a super admin who approves the app association (30-day window; the association is permanent)",
+      "requiredFor": "build",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "l5",
+          "l8",
+          "l4"
+        ]
+      }
+    },
+    {
+      "item": "Registered legal organization: legal name, registered address, website",
+      "profileKey": "legalEntity",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "l4"
+        ],
+        "note": "The profile's legalEntity is null. This is the main thing missing for LinkedIn."
+      }
+    },
+    {
+      "item": "Verified business email (personal addresses fail vetting)",
+      "profileKey": "developerContactEmail",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "l4"
+        ],
+        "note": "ibrahim@iskaria.com is on the company domain, which should pass."
+      }
+    },
+    {
+      "item": "Privacy policy URL",
+      "profileKey": "privacyPolicyUrl",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "l4"
+        ]
+      }
+    },
+    {
+      "item": "Website and domain that match the organization",
+      "profileKey": "homepageUrl",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "l4"
+        ]
+      }
+    },
+    {
+      "item": "App logo and name without any part of the LinkedIn/Microsoft names or logos",
+      "profileKey": "logo.square512Png",
+      "requiredFor": "build",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "l4"
+        ],
+        "note": "The profile has no exported logo PNG."
+      }
+    },
+    {
+      "item": "Screencast (high-resolution, downloadable, narration recommended) and test credentials, for Standard tier",
+      "profileKey": "demoVideoUrl",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "l4"
+        ],
+        "note": "The profile has no demo video."
+      }
+    },
+    {
+      "item": "HTTPS absolute redirect URL",
+      "profileKey": "redirectUris",
+      "requiredFor": "build",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "l7"
+        ],
+        "note": "Use the https://app.iskaria.com callback. Docs say to add redirect URLs via HTTPS; the profile's http://localhost entry may not be accepted."
+      }
+    }
+  ],
+  "steps": [
+    {
+      "title": "Create or confirm the Iskaria LinkedIn Company Page",
+      "who": "you",
+      "phase": "build",
+      "detail": "Create the Page under a real member account (no fake/headless profiles) and set its website to iskaria.com. Business verification on LinkedIn's side is checked against this Page and domain.",
+      "estimate": "15 min",
+      "fields": [
+        {
+          "label": "Website",
+          "profileKey": "homepageUrl"
+        }
+      ],
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "l5",
+          "l9"
+        ]
+      }
+    },
+    {
+      "title": "Create a NEW developer app just for Community Management",
+      "who": "you",
+      "phase": "build",
+      "detail": "linkedin.com/developers/apps/new: name, the Iskaria Page, privacy policy URL, logo. Don't add Sign In with LinkedIn or other products to this app first. LinkedIn only lets you request Community Management on new apps that have no other API products. Use a separate app for login if you need one.",
+      "url": "https://www.linkedin.com/developers/apps/new",
+      "estimate": "10 min",
+      "fields": [
+        {
+          "label": "App name",
+          "profileKey": "appName"
+        },
+        {
+          "label": "LinkedIn Page",
+          "note": "Permanent association; cannot be transferred"
+        },
+        {
+          "label": "Privacy policy URL",
+          "profileKey": "privacyPolicyUrl"
+        },
+        {
+          "label": "App logo",
+          "profileKey": "logo.square512Png",
+          "note": "Missing in profile"
+        }
+      ],
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "l2",
+          "l8"
+        ]
+      }
+    },
+    {
+      "title": "Have the Page super admin verify the app",
+      "who": "you",
+      "phase": "build",
+      "detail": "Settings tab > Verify. Send the verification request to a super admin of the Iskaria Page, who has 30 days to approve. Unverified apps fail Development tier vetting.",
+      "estimate": "5 min",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "l8",
+          "l4"
+        ]
+      }
+    },
+    {
+      "title": "Add redirect URL and generate a test token",
+      "who": "agent-then-you",
+      "phase": "test",
+      "detail": "Auth tab: add the absolute HTTPS callback (no #, query ignored). Use the Token Generator or the 3-legged flow. Before approval only open scopes are listed.",
+      "estimate": "10 min",
+      "fields": [
+        {
+          "label": "Authorized redirect URLs for your app",
+          "profileKey": "redirectUris"
+        }
+      ],
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "l7",
+          "l1"
+        ]
+      }
+    },
+    {
+      "title": "Apply for Community Management API Development tier",
+      "who": "agent-then-you",
+      "phase": "launch",
+      "detail": "Products tab > Community Management API > access form. Give the legal name, registered address, website, privacy policy and business email (then verify the email), and describe the use case: a clinic's assistant posts to that clinic's own Page. Read the restricted use cases first. An agent can draft the use-case text; a human submits.",
+      "estimate": "30 min hands-on; ~10-14 business days reported",
+      "fields": [
+        {
+          "label": "Organization legal name",
+          "profileKey": "legalEntity",
+          "note": "Missing in profile"
+        },
+        {
+          "label": "Business email",
+          "profileKey": "developerContactEmail"
+        },
+        {
+          "label": "Website",
+          "profileKey": "homepageUrl"
+        },
+        {
+          "label": "Privacy policy",
+          "profileKey": "privacyPolicyUrl"
+        },
+        {
+          "label": "Use case",
+          "profileKey": "useCases.default"
+        }
+      ],
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "l4",
+          "l10"
+        ]
+      }
+    },
+    {
+      "title": "Build the Page-posting flow within Development tier limits",
+      "who": "agent",
+      "phase": "test",
+      "detail": "Implement OAuth with w_organization_social + r_organization_social (+ rw_organization_admin to list Pages via /organizationAcls). Post with the Posts API using the organization URN as author. Stay under 500 calls/app/day, and finish within 12 months.",
+      "estimate": "1-3 days",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "l3",
+          "l11"
+        ]
+      }
+    },
+    {
+      "title": "Record the Standard tier screencast",
+      "who": "you",
+      "phase": "launch",
+      "detail": "Page Management use case: show the full OAuth approval, a post going to the LinkedIn Page from the app, how a member's comment on it appears in the app, and which commenter profile fields are shown. Use high resolution and a downloadable file, show only your app's screens, and narrate.",
+      "estimate": "1-2 h",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "l4"
+        ]
+      }
+    },
+    {
+      "title": "Apply for Standard tier",
+      "who": "agent-then-you",
+      "phase": "launch",
+      "detail": "My Apps > Products > Standard tier access form: company and product overview, use case, test credentials, screencast. LinkedIn reviews against privacy policy, terms, security and data-storage rules, and may decline at its discretion. A rejection means a new app and a new Development tier application.",
+      "estimate": "1 h hands-on; weeks of waiting (no published SLA)",
+      "fields": [
+        {
+          "label": "Screencast",
+          "profileKey": "demoVideoUrl",
+          "note": "Missing in profile"
+        },
+        {
+          "label": "Company overview",
+          "profileKey": "appDescription"
+        }
+      ],
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "l3",
+          "l4"
+        ]
+      }
+    },
+    {
+      "title": "Handle 60-day token expiry",
+      "who": "agent",
+      "phase": "launch",
+      "detail": "Access tokens last 60 days, and programmatic refresh tokens are only for a limited set of partners. Without refresh tokens, re-run the authorization flow (silent if the member is still logged in) before expiry. If you change scopes, users must re-consent, and earlier tokens are invalidated.",
+      "estimate": "2-4 h",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "l7"
+        ]
+      }
+    }
+  ],
+  "scopes": [
+    {
+      "name": "w_organization_social",
+      "purpose": "Create posts, comments and reactions as the clinic's Company Page",
+      "tier": "partner-only",
+      "note": "Only via the Community Management (or Advertising) API. The member must be an admin of that Page.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "l3"
+        ]
+      }
+    },
+    {
+      "name": "r_organization_social",
+      "purpose": "Read the Page's own posts and engagement to confirm publication and report results",
+      "tier": "partner-only",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "l3"
+        ]
+      }
+    },
+    {
+      "name": "rw_organization_admin",
+      "purpose": "List the Pages the member administers and read Page analytics",
+      "tier": "partner-only",
+      "note": "Restricted to organizations where the member has the ADMINISTRATOR role.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "l3"
+        ]
+      }
+    },
+    {
+      "name": "w_member_social",
+      "purpose": "Post as the authenticated person (e.g. a doctor's own profile), not as the Page",
+      "tier": "basic",
+      "note": "Open via the self-serve Share on LinkedIn product. Using it with an organization author returns HTTP 400 'Organization permissions must be used when using organization as author'.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "l1",
+          "l6",
+          "l11"
+        ]
+      }
+    },
+    {
+      "name": "openid profile email",
+      "purpose": "Identify the staff member who connects LinkedIn",
+      "tier": "basic",
+      "note": "Sign In with LinkedIn using OpenID Connect, self-serve. Put it on a separate app from Community Management.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "l1",
+          "l2"
+        ]
+      }
+    }
+  ],
+  "blockers": [
+    {
+      "title": "No registered legal entity on file",
+      "detail": "Community Management is only for registered legal organizations with commercial use cases. LinkedIn checks the organization, website/domain and business email.",
+      "severity": "can-block-launch",
+      "workaround": "Fill legalEntity, make the Page website iskaria.com, and use the iskaria.com email.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "l4"
+        ]
+      }
+    },
+    {
+      "title": "Rejection burns the app",
+      "detail": "A rejected Development or Standard tier request can't be re-applied for on the same app. You must create a new app and start again with Development tier.",
+      "severity": "slows-you-down",
+      "workaround": "Prepare every field and the screencast before submitting.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "l4"
+        ]
+      }
+    },
+    {
+      "title": "Community Management must be alone on a new app",
+      "detail": "The access request is greyed out on apps that already have other API products (e.g. Sign In with LinkedIn), so login and Page posting end up as two apps.",
+      "severity": "slows-you-down",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "l2"
+        ]
+      }
+    },
+    {
+      "title": "Data rules conflict with lead tracking",
+      "detail": "Member data (commenters, reactors) may not be used to create leads or enrich a CRM, may not be combined with other data, may only be displayed in the app, and social activity data may be stored for 48 hours at most. An Iskaria assistant that turns LinkedIn commenters into clinic leads would be a restricted use case.",
+      "severity": "can-block-launch",
+      "workaround": "Keep the LinkedIn use case to publishing and Page analytics. Don't feed member data into lead tracking.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "l9"
+        ]
+      }
+    },
+    {
+      "title": "Standard tier is discretionary",
+      "detail": "LinkedIn may decline to upgrade even when the minimum requirements are met, and Development tier access lapses if the integration isn't completed within 12 months.",
+      "severity": "can-block-launch",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "l3"
+        ]
+      }
+    },
+    {
+      "title": "No review SLA, weak support routing",
+      "detail": "LinkedIn publishes no turnaround. A 2026 report describes 14+ business days at 'Access Form Review' with support cases routed to the wrong teams.",
+      "severity": "slows-you-down",
+      "evidence": {
+        "status": "inferred",
+        "sourceIds": [
+          "l10"
+        ]
+      }
+    }
+  ],
+  "agentHandoff": {
+    "agentCan": [
+      "Draft the Development and Standard tier use-case text from the profile",
+      "Check the request against LinkedIn's restricted-use-cases list before submission",
+      "Implement the 3-legged OAuth flow, Posts API with organization author, and /organizationAcls Page listing",
+      "Write the screencast script for the Page Management test cases",
+      "Track 60-day token expiry and prompt re-consent; respect Development tier rate limits"
+    ],
+    "youMust": [
+      "Create the Company Page and developer app with a real LinkedIn account",
+      "Get a Page super admin to verify the app",
+      "Supply the legal entity details and verify the business email",
+      "Submit both access forms, record the screencast, provide reviewer test credentials"
+    ]
+  },
+  "uncertainties": [
+    "Review times are undocumented. The '10-14 business days' figure is one developer's transcription of the portal dialog (Aug 2026); a GitHub issue guessed '1-5 business days'.",
+    "Whether Sign In with LinkedIn can be added to the Community Management app after approval (the FAQ covers only the request time); we assume separate apps.",
+    "Whether LinkedIn accepts http://localhost redirect URLs; docs only say to add them via HTTPS.",
+    "Whether a multi-tenant tool (Iskaria posting for several clinics' Pages) needs anything beyond the standard Page Management use case. No test yet: Iskaria has only noted that Community Management needs an approved developer app.",
+    "Marketing version 202511 sunsets 2026-11-16; check the current API version header (li-lms-2026-10 is current)."
+  ],
+  "sources": [
+    {
+      "id": "l1",
+      "title": "Getting Access to LinkedIn APIs",
+      "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/getting-access",
+      "kind": "official-docs",
+      "quote": "Open Permissions are the only permissions that are available to all developers without special approval.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "l2",
+      "title": "Community Management - Overview",
+      "url": "https://learn.microsoft.com/en-us/linkedin/marketing/community-management/community-management-overview",
+      "kind": "official-docs",
+      "quote": "with new developer applications that don't have access to other API products",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "l3",
+      "title": "Increasing Access (Marketing API tiers and permissions)",
+      "url": "https://learn.microsoft.com/en-us/linkedin/marketing/increasing-access",
+      "kind": "official-docs",
+      "quote": "You must complete your integration and testing within twelve months of receiving the API access.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "l4",
+      "title": "Community Management App Review",
+      "url": "https://learn.microsoft.com/en-us/linkedin/marketing/community-management-app-review",
+      "kind": "provider-policy",
+      "quote": "our Community Management APIs are only available to registered legal organizations for commercial use cases only.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "l5",
+      "title": "Marketing API Quick Start",
+      "url": "https://learn.microsoft.com/en-us/linkedin/marketing/quick-start",
+      "kind": "official-docs",
+      "quote": "Access to a Company Page cannot be granted or updated through the API.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "l6",
+      "title": "Share on LinkedIn",
+      "url": "https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/share-on-linkedin",
+      "kind": "official-docs",
+      "quote": "Required to create a LinkedIn post on behalf of the authenticated member.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "l7",
+      "title": "LinkedIn 3-Legged OAuth Flow",
+      "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow",
+      "kind": "official-docs",
+      "quote": "Currently, all access tokens are issued with a 60-day lifespan.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "l8",
+      "title": "Associate an app with a LinkedIn Page (Help)",
+      "url": "https://www.linkedin.com/help/linkedin/answer/a548360/associate-an-app-with-a-linkedin-page?lang=en",
+      "kind": "provider-policy",
+      "quote": "Your page super admin has 30 days to approve the request to associate an app with a LinkedIn Page.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "l9",
+      "title": "Restricted Uses of LinkedIn Marketing APIs and Data",
+      "url": "https://learn.microsoft.com/en-us/linkedin/marketing/restricted-use-cases",
+      "kind": "provider-policy",
+      "quote": "member social activity data can only be stored for 48 hours",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "l10",
+      "title": "Microsoft Q&A: Community Management API access stuck at 'Access Form Review' (Aug 2026)",
+      "url": "https://learn.microsoft.com/en-in/answers/questions/5973690/community-management-api-access-stuck-at-1-of-2-ac",
+      "kind": "community",
+      "quote": "within 10-14 business days",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "l11",
+      "title": "GitHub issue: request Community Management API for w_organization_social (soleur #799)",
+      "url": "https://github.com/jikig-ai/soleur/issues/799",
+      "kind": "community",
+      "quote": "Organization permissions must be used when using organization as author",
+      "accessed": "2026-10-30"
+    }
+  ],
+  "meta": {
+    "generatedBy": "seed-research",
+    "generatedAt": "2026-10-30",
+    "verification": [
+      {
+        "claim": "Community Management Development tier is limited to 100 calls per app and 10 per member per day",
+        "method": "Fetched Community Management overview FAQ and Increasing Access table",
+        "result": "corrected",
+        "note": "Raised to 500 per app and 100 per member per 24 h. BATCH_GET is disallowed and webhooks are off."
+      },
+      {
+        "claim": "Company Page posting is part of the 'Marketing Developer Platform'",
+        "method": "Fetched Getting Access and Increasing Access",
+        "result": "corrected",
+        "note": "The docs now name separate vetted products (Advertising API, Community Management API) under the Marketing API program. Organic Page posting is the Community Management API."
+      },
+      {
+        "claim": "w_member_social is self-serve but can't post as an organization",
+        "method": "Fetched Getting Access (open permissions) and a GitHub issue showing the HTTP 400 error",
+        "result": "confirmed"
+      },
+      {
+        "claim": "Community Management can only be requested on an app without other products",
+        "method": "Fetched Community Management overview FAQ #4",
+        "result": "confirmed"
+      },
+      {
+        "claim": "Refresh tokens are available to all apps",
+        "method": "Fetched 3-legged OAuth doc",
+        "result": "corrected",
+        "note": "Programmatic refresh tokens are only for a limited set of partners. Access tokens last 60 days."
+      },
+      {
+        "claim": "Development tier review takes 10-14 business days",
+        "method": "Microsoft Q&A post (Aug 2026); no official page found",
+        "result": "unverified"
+      }
+    ]
+  }
+}

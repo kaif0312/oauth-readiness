@@ -1,0 +1,740 @@
+{
+  "slug": "meta",
+  "app": "Meta (Facebook Login for Business: Pages, Messenger, Instagram, WhatsApp Business)",
+  "website": "https://developers.facebook.com/",
+  "category": "Messaging & social",
+  "summary": "Creating the app and testing with your own Page, Instagram account and WhatsApp number takes about an hour. To reach other businesses' accounts you need Advanced Access, and getting it is the slow part: Business Verification, App Review with one screencast and one written use case per permission, and for WhatsApp Embedded Signup also Tech Provider Access Verification. Plan for 2-8 weeks of calendar time. Each rejection restarts the review queue, and every connected Page has to reconnect before its token carries newly approved scopes.",
+  "verdict": {
+    "difficulty": "hard",
+    "timeToFirstToken": "30-60 min",
+    "timeToLaunch": "2-8 weeks",
+    "launchNote": "First token: 30-60 min (own Page/IG/WhatsApp test number, Standard Access, Development mode). 2-8 weeks from scratch (Business Verification + App Review + Access Verification, often one or more resubmissions); 1-4 weeks to add publishing scopes to an already verified, live app like Iskaria's.",
+    "reviewRequired": "App Review per permission for Advanced Access (screencast + written use case each), Business Verification of the app's business portfolio, and for WhatsApp Embedded Signup the Tech Provider Access Verification; afterwards an annual Data Use Checkup",
+    "cost": "Free (WhatsApp billed per msg)",
+    "costNote": "free to register and review; WhatsApp conversations are billed per message to the client's WhatsApp Business Account (client adds a payment method)",
+    "evidence": {
+      "status": "sourced",
+      "sourceIds": [
+        "m1",
+        "m3",
+        "m6",
+        "m14",
+        "m16",
+        "m17"
+      ],
+      "note": "Meta's official wait is 'a decision within a week' per submission; the 2-8 week range adds verification and the ~20-day per-cycle reviews reported by developers in 2026 (anecdotal)."
+    }
+  },
+  "testMode": {
+    "available": true,
+    "limits": "Standard Access, available without review, works only for people who hold a role on the app (admin/developer/tester) and on assets they manage. In Development mode the app can request permissions only from role users. Embedded Signup cannot be tested on localhost: it needs an allowlisted HTTPS domain. A Tech Provider cannot onboard its own business portfolio through Embedded Signup, so test with a separate test business.",
+    "evidence": {
+      "status": "sourced",
+      "sourceIds": [
+        "m1",
+        "m2",
+        "m8",
+        "m17"
+      ],
+      "note": "The HTTPS-only and own-portfolio limits come from Iskaria's production app."
+    }
+  },
+  "prerequisites": [
+    {
+      "item": "Meta developer account plus a business portfolio (formerly Business Manager) that owns the app. Required for apps that access data the developer does not own.",
+      "requiredFor": "build",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "m13"
+        ]
+      }
+    },
+    {
+      "item": "Privacy policy URL on the app (Basic Settings), live and reachable",
+      "profileKey": "privacyPolicyUrl",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "m17",
+          "m4"
+        ],
+        "note": "https://iskaria.com/privacy is live (2026-10-30)."
+      }
+    },
+    {
+      "item": "Data deletion instructions URL or a data deletion callback URL (Basic Settings)",
+      "profileKey": "dataDeletionUrl",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "m4",
+          "m17"
+        ],
+        "note": "https://iskaria.com/data-deletion is live (2026-10-30). That is an instructions page, not a signed-request callback; either one satisfies the field."
+      }
+    },
+    {
+      "item": "App icon and category in Basic Settings (App Review checks app settings)",
+      "profileKey": "logo.square512Png",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "m6"
+        ],
+        "note": "The profile has no exported logo PNG yet (logo.square512Png is null). The required icon pixel size was not checked this session."
+      }
+    },
+    {
+      "item": "Business Verification of the business portfolio that owns the app: legal name, address, phone, website, and documents if Meta cannot match public records",
+      "profileKey": "businessVerification.meta",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "m1",
+          "m6",
+          "m12"
+        ],
+        "note": "The profile says 'unknown', but Iskaria's app already holds Advanced Access, which requires verification. Update the profile. Also missing: legalEntity is null."
+      }
+    },
+    {
+      "item": "Screencasts, one per requested permission (1080p or better, no audio needed)",
+      "profileKey": "demoVideoUrl",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "m3"
+        ],
+        "note": "The profile has no demo video (demoVideoUrl is null). Record new videos for each submission."
+      }
+    },
+    {
+      "item": "Each connected client Instagram account must be a professional (Business/Creator) account. On the Facebook Login path it must also be linked to the client's Facebook Page.",
+      "requiredFor": "build",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "m11",
+          "m17"
+        ]
+      }
+    },
+    {
+      "item": "HTTPS domain allowlisted in the app (Allowed Domains for the JS SDK / Embedded Signup) and Valid OAuth Redirect URIs",
+      "profileKey": "appDomain",
+      "requiredFor": "build",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "m8",
+          "m17"
+        ],
+        "note": "app.iskaria.com. The http://localhost redirect in the profile does not work for Embedded Signup."
+      }
+    }
+  ],
+  "steps": [
+    {
+      "title": "Create a Business app from use cases",
+      "who": "you",
+      "phase": "build",
+      "detail": "Go to developers.facebook.com > My Apps > Create app. Pick the use cases you need (for example 'Manage everything on your Page', the Instagram messaging/content use case, and 'Connect with customers through WhatsApp'). Use cases cannot be removed later, and the dashboard greys out incompatible ones. When asked, connect the app to your business portfolio (verified or not yet verified).",
+      "url": "https://developers.facebook.com/apps/",
+      "estimate": "10 min",
+      "fields": [
+        {
+          "label": "App name",
+          "profileKey": "appName"
+        },
+        {
+          "label": "App contact email",
+          "profileKey": "developerContactEmail"
+        },
+        {
+          "label": "Business portfolio",
+          "note": "Required if the app touches data you don't own"
+        }
+      ],
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "m13"
+        ],
+        "note": "Meta's create-an-app doc names 'Manage everything on your Page'. The exact Instagram and WhatsApp use-case labels were not confirmed in docs this session."
+      }
+    },
+    {
+      "title": "Fill Basic Settings: URLs, icon, category, deletion",
+      "who": "agent-then-you",
+      "phase": "build",
+      "detail": "App settings > Basic: App domains, Privacy Policy URL, Terms of Service URL, User data deletion (instructions URL or callback URL), icon, category. An agent can prepare all values from the profile; a human pastes them in and saves.",
+      "estimate": "10 min",
+      "fields": [
+        {
+          "label": "App domains",
+          "profileKey": "authorizedDomains"
+        },
+        {
+          "label": "Privacy Policy URL",
+          "profileKey": "privacyPolicyUrl"
+        },
+        {
+          "label": "Terms of Service URL",
+          "profileKey": "termsUrl",
+          "note": "Confirm https://iskaria.com/terms is live before submitting"
+        },
+        {
+          "label": "User data deletion (Data deletion instructions URL)",
+          "profileKey": "dataDeletionUrl"
+        },
+        {
+          "label": "App icon",
+          "profileKey": "logo.square512Png",
+          "note": "Missing in profile"
+        }
+      ],
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "m4",
+          "m6"
+        ]
+      }
+    },
+    {
+      "title": "Configure Facebook Login for Business and redirect URIs",
+      "who": "agent-then-you",
+      "phase": "build",
+      "detail": "Add the Facebook Login for Business product. Create a configuration (its config_id) listing only the assets and permissions you need. Set Valid OAuth Redirect URIs (HTTPS) and, for the JS SDK and Embedded Signup, Allowed Domains with Enforce HTTPS on.",
+      "estimate": "15 min",
+      "fields": [
+        {
+          "label": "Valid OAuth Redirect URIs",
+          "profileKey": "redirectUris",
+          "note": "Use the https://app.iskaria.com callback"
+        },
+        {
+          "label": "Allowed Domains for the JavaScript SDK",
+          "profileKey": "appDomain"
+        }
+      ],
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "m7",
+          "m8"
+        ]
+      }
+    },
+    {
+      "title": "Test with your own assets under Standard Access",
+      "who": "agent-then-you",
+      "phase": "test",
+      "detail": "Log in as an app admin. Connect your own Page, IG professional account and WhatsApp test number, then call the Graph API: send a Messenger/IG reply, publish a test Page post, send a WhatsApp message. Add teammates as app testers; non-role users will fail.",
+      "estimate": "30-60 min",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "m1",
+          "m2"
+        ]
+      }
+    },
+    {
+      "title": "Complete Business Verification",
+      "who": "you",
+      "phase": "launch",
+      "detail": "Business portfolio > Security Center > Start verification. Enter the legal name, address, phone and website, and upload a registration or tax document if Meta can't match public records. Then confirm by email, phone or domain. The name must match the documents exactly.",
+      "estimate": "30 min hands-on; days to ~4 weeks wait",
+      "fields": [
+        {
+          "label": "Legal business name",
+          "profileKey": "legalEntity",
+          "note": "Missing in profile"
+        },
+        {
+          "label": "Website",
+          "profileKey": "homepageUrl"
+        }
+      ],
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "m6",
+          "m12"
+        ],
+        "note": "The wait time is not documented by Meta; the 4-week figure comes from third-party help centres (anecdotal)."
+      }
+    },
+    {
+      "title": "Record one screencast per permission",
+      "who": "you",
+      "phase": "launch",
+      "detail": "For each permission, record at 1080p or better with no cuts. Start from the login and consent screen, then show the permission at work end to end: a reply arriving in Messenger/IG, a post visible on the Page, a published IG post, a WhatsApp message received in the WhatsApp client and a template created. Reviewers follow the video, so use the same test account you give them.",
+      "estimate": "1-3 h",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "m3",
+          "m6"
+        ]
+      }
+    },
+    {
+      "title": "Submit App Review for Advanced Access",
+      "who": "agent-then-you",
+      "phase": "launch",
+      "detail": "App Review > Permissions and features: request Advanced Access per permission. Write a separate use-case description for each one (don't reuse text), upload its video, and explain in Platform Settings how reviewers can reach the app. An agent can draft the descriptions from useCases.meta; a human submits.",
+      "url": "https://developers.facebook.com/apps/",
+      "estimate": "1-2 h hands-on; ~1 week official, ~20 days reported per cycle",
+      "fields": [
+        {
+          "label": "Use case description (per permission)",
+          "profileKey": "useCases.meta"
+        },
+        {
+          "label": "Screencast (per permission)",
+          "profileKey": "demoVideoUrl",
+          "note": "Missing in profile"
+        }
+      ],
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "m3",
+          "m16"
+        ]
+      }
+    },
+    {
+      "title": "WhatsApp: become a Tech Provider (Access Verification) and enable Embedded Signup",
+      "who": "you",
+      "phase": "launch",
+      "detail": "After Business Verification and approval of whatsapp_business_messaging + whatsapp_business_management, complete Access Verification in the WhatsApp dashboard (shown as about 5 business days). Until all three are done, Embedded Signup onboards at most 10 new business customers per rolling 7 days; after them, 200. Test onboarding with a business portfolio other than the one that owns the app.",
+      "estimate": "30 min hands-on; ~5 business days stated, often longer",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "m6",
+          "m7",
+          "m14",
+          "m17"
+        ]
+      }
+    },
+    {
+      "title": "Switch the app to Live and have every Page reconnect",
+      "who": "agent-then-you",
+      "phase": "launch",
+      "detail": "Set App Mode to Live. Each client then has to go through Facebook Login for Business again so their Page/IG token carries the newly approved scopes. Old tokens keep failing on publish calls with Graph error 10 or 200-299 until they reconnect. An agent can detect missing scopes (debug_token) and prompt each clinic.",
+      "estimate": "5 min + per-client reconnect",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "m17",
+          "m2"
+        ]
+      }
+    },
+    {
+      "title": "Complete the annual Data Use Checkup",
+      "who": "you",
+      "phase": "launch",
+      "detail": "An app admin gets notified 60 days before the app's Data Use Checkup deadline. Review the permissions in use, answer the data-handling questions and certify compliance. Missing it risks losing API access. Keep admin contact details current.",
+      "estimate": "30 min/year",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "m9",
+          "m10"
+        ]
+      }
+    }
+  ],
+  "scopes": [
+    {
+      "name": "pages_messaging",
+      "purpose": "Read and reply to the clinic Page's Messenger conversations",
+      "tier": "sensitive",
+      "note": "Depends on pages_manage_metadata and pages_show_list. Iskaria already holds it.",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "m5",
+          "m17"
+        ]
+      }
+    },
+    {
+      "name": "pages_manage_posts",
+      "purpose": "Publish, edit and delete the clinic's own Page posts",
+      "tier": "sensitive",
+      "note": "Depends on pages_read_engagement and pages_show_list. Iskaria does NOT have it yet: publish calls fail (Graph error 10 / 200-299) until Advanced Access is granted.",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "m5",
+          "m17"
+        ]
+      }
+    },
+    {
+      "name": "pages_read_engagement",
+      "purpose": "Read the Page's own posts and engagement; prerequisite for the posting and IG permissions",
+      "tier": "sensitive",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "m5",
+          "m17"
+        ]
+      }
+    },
+    {
+      "name": "instagram_manage_messages",
+      "purpose": "Read and reply to the clinic's Instagram Direct messages",
+      "tier": "sensitive",
+      "note": "Facebook Login path; needs instagram_basic, pages_read_engagement, pages_show_list. The Instagram Login path uses instagram_business_manage_messages instead and needs no linked Page.",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "m5",
+          "m11",
+          "m17"
+        ]
+      }
+    },
+    {
+      "name": "instagram_content_publish",
+      "purpose": "Publish the clinic's organic Instagram feed posts",
+      "tier": "sensitive",
+      "note": "Not yet held by Iskaria. Instagram Login equivalent: instagram_business_content_publish.",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "m5",
+          "m11",
+          "m17"
+        ]
+      }
+    },
+    {
+      "name": "whatsapp_business_messaging",
+      "purpose": "Send and receive WhatsApp messages, media and templates for the clinic's number",
+      "tier": "sensitive",
+      "note": "Depends on whatsapp_business_management. Needed for the Tech Provider path. Review video must show a message sent from the app arriving in WhatsApp.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "m5",
+          "m6"
+        ]
+      }
+    },
+    {
+      "name": "business_management",
+      "purpose": "Read and manage the client's business portfolio assets (Pages, ad accounts, WABAs) via the Business Manager API",
+      "tier": "sensitive",
+      "note": "Iskaria holds it. Request only if you truly manage portfolio assets; reviewers question it often.",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "m5",
+          "m17"
+        ]
+      }
+    }
+  ],
+  "blockers": [
+    {
+      "title": "Every rejection restarts the queue",
+      "detail": "Meta reviews the whole submission in one pass. A broken privacy URL, test login, or a video that doesn't show the consent screen gets permissions rejected, and the resubmission waits the full cycle again. Developers report ~20 days per cycle in 2026; Meta's guide says about a week.",
+      "severity": "slows-you-down",
+      "workaround": "Verify the business first. Make sure the reviewer test path works. Record each video from login to visible result on the day you submit.",
+      "evidence": {
+        "status": "inferred",
+        "sourceIds": [
+          "m3",
+          "m16"
+        ]
+      }
+    },
+    {
+      "title": "Business Verification rejected or stuck",
+      "detail": "Advanced Access is impossible without Business Verification. A legal name that doesn't match the documents, or a website without the legal entity in its footer, is a common cause of rejection.",
+      "severity": "can-block-launch",
+      "workaround": "Fill legalEntity in the profile and make the iskaria.com footer show the same legal name.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "m1",
+          "m12"
+        ]
+      }
+    },
+    {
+      "title": "New scopes do not reach existing tokens",
+      "detail": "After pages_manage_posts / instagram_content_publish are approved, each connected Page and IG account must reconnect through Facebook Login for Business. Until then publish calls fail with Graph error 10 or 200-299.",
+      "severity": "slows-you-down",
+      "workaround": "Check granted scopes per token and show a 'reconnect to enable posting' prompt.",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "m17"
+        ]
+      }
+    },
+    {
+      "title": "Client WABA not verified blocks templates",
+      "detail": "A client WhatsApp Business Account whose business verification sat at 'pending_submission' could not publish or send templates until the client verified their own business.",
+      "severity": "can-block-launch",
+      "workaround": "Make client business verification part of onboarding, with the client's own documents.",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "m17"
+        ]
+      }
+    },
+    {
+      "title": "Embedded Signup: HTTPS only, not your own portfolio, 10 customers/week before verification",
+      "detail": "Embedded Signup runs only on Allowed Domains with HTTPS, so localhost is out. The Tech Provider cannot onboard the portfolio that owns the app. Before Business Verification + App Review + Access Verification, the cap is 10 new customers per rolling 7 days.",
+      "severity": "slows-you-down",
+      "workaround": "Test on a preview HTTPS domain with a separate test business portfolio.",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "m7",
+          "m8",
+          "m17"
+        ]
+      }
+    },
+    {
+      "title": "Access Verification can stall past its stated 5 business days",
+      "detail": "In September-October 2026, developers reported Tech Provider Access Verification stuck 'In review' well past the 5 days shown, with support cases closed by an AI agent.",
+      "severity": "slows-you-down",
+      "evidence": {
+        "status": "inferred",
+        "sourceIds": [
+          "m14"
+        ]
+      }
+    },
+    {
+      "title": "Missing the annual Data Use Checkup",
+      "detail": "Live apps with Advanced Access must complete the Data Use Checkup by their deadline, or API access is at risk.",
+      "severity": "can-block-launch",
+      "workaround": "Keep at least two app admins with current emails.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "m9",
+          "m10"
+        ]
+      }
+    }
+  ],
+  "agentHandoff": {
+    "agentCan": [
+      "Prepare all Basic Settings values from the developer profile",
+      "Draft a distinct App Review use-case description per permission from useCases.meta",
+      "Write screencast scripts (login > consent > action > visible result) per permission",
+      "Implement Facebook Login for Business, the data deletion callback and webhook handlers",
+      "Detect tokens missing new scopes (debug_token) and prompt each clinic to reconnect",
+      "Monitor Graph error codes 10 / 200-299 and surface 'needs review/reconnect'"
+    ],
+    "youMust": [
+      "Log in to the Meta developer dashboard and create the app (human Facebook account)",
+      "Submit Business Verification with legal documents",
+      "Record the screencasts and submit App Review",
+      "Complete Tech Provider Access Verification",
+      "Switch the app to Live and complete the annual Data Use Checkup",
+      "Have each client verify their own business for WhatsApp templates"
+    ]
+  },
+  "uncertainties": [
+    "Review times: Meta says 'a decision within a week'; the ~20-day per-cycle figure and the 4-week Business Verification figure are anecdotal (2026 third-party posts).",
+    "Exact use-case labels in the 2026 app dashboard for Instagram and WhatsApp were not confirmed in official docs this session; only 'Manage everything on your Page' was.",
+    "Whether Business-type apps still show a Development/Live toggle in the use-case dashboard; Meta's app-modes page does not address Business apps specifically.",
+    "Whether Iskaria's business portfolio is formally recorded as verified: profile says 'unknown' although Advanced Access implies it.",
+    "Meta's WhatsApp docs are moving to developers.facebook.com/documentation/business-messaging/...; some older /docs/whatsapp deep links may redirect or 404.",
+    "Whether https://iskaria.com/terms and /support are live was not checked."
+  ],
+  "sources": [
+    {
+      "id": "m1",
+      "title": "Access Levels (Graph API)",
+      "url": "https://developers.facebook.com/docs/graph-api/overview/access-levels/",
+      "kind": "official-docs",
+      "quote": "Business Verification is required to get Advanced Access.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "m2",
+      "title": "App Modes",
+      "url": "https://developers.facebook.com/docs/development/build-and-test/app-modes/",
+      "kind": "official-docs",
+      "quote": "Apps in Development mode can only request permissions from role users.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "m3",
+      "title": "App Review Submission Guide",
+      "url": "https://developers.facebook.com/docs/app-review/submission-guide/",
+      "kind": "official-docs",
+      "quote": "receive a decision within a week",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "m4",
+      "title": "Data Deletion Callback",
+      "url": "https://developers.facebook.com/docs/development/create-an-app/app-dashboard/data-deletion-callback/",
+      "kind": "official-docs",
+      "quote": "Developers need to specify either a data deletion callback instruction URL or a callback URL found in Basic Settings for your app.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "m5",
+      "title": "Permissions Reference",
+      "url": "https://developers.facebook.com/docs/permissions/",
+      "kind": "official-docs",
+      "quote": "allows your app to create, edit and delete your Page posts.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "m6",
+      "title": "Get Started for Tech Providers (WhatsApp)",
+      "url": "https://developers.facebook.com/docs/whatsapp/solution-providers/get-started-for-tech-providers/",
+      "kind": "official-docs",
+      "quote": "To become a tech provider you need to verify your business with Meta.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "m7",
+      "title": "Embedded Signup overview",
+      "url": "https://developers.facebook.com/docs/whatsapp/embedded-signup/",
+      "kind": "official-docs",
+      "quote": "By default, you can onboard up to 10 new business customers in a rolling 7-day window.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "m8",
+      "title": "Embedded Signup implementation",
+      "url": "https://developers.facebook.com/documentation/business-messaging/whatsapp/embedded-signup/implementation",
+      "kind": "official-docs",
+      "quote": "Only domains that have enabled HTTPS are supported.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "m9",
+      "title": "Data Use Checkup",
+      "url": "https://developers.facebook.com/docs/resp-plat-initiatives/individual-processes/data-use-checkup/",
+      "kind": "provider-policy",
+      "quote": "The Data Use Checkup is an annual assessment that evaluates whether",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "m10",
+      "title": "Data Use Checkup - Tutorial",
+      "url": "https://developers.facebook.com/docs/resp-plat-initiatives/individual-processes/data-use-checkup/tutorial",
+      "kind": "provider-policy",
+      "quote": "will receive a developer notification in your email and Alerts Inbox 60 days before DUC is due",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "m11",
+      "title": "Instagram Platform overview",
+      "url": "https://developers.facebook.com/docs/instagram-platform/overview/",
+      "kind": "official-docs",
+      "quote": "Instagram API with Instagram Login serves Instagram professional accounts without requiring a linked Facebook Page.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "m12",
+      "title": "Business Verification (app development)",
+      "url": "https://developers.facebook.com/docs/development/release/business-verification/",
+      "kind": "official-docs",
+      "quote": "must be connected to a Business that has completed Business Verification",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "m13",
+      "title": "Create an App",
+      "url": "https://developers.facebook.com/docs/development/create-an-app/",
+      "kind": "official-docs",
+      "quote": "If your app will access data that you don't own or manage, you must connect your app to a business portfolio.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "m14",
+      "title": "Meta developer forum: Access Verification stuck 'In Review' (Oct 2026)",
+      "url": "https://developers.facebook.com/community/threads/1125158213826267/",
+      "kind": "community",
+      "quote": "Submissions typically take around 5 business days.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "m16",
+      "title": "WoopSocial: Meta App Review Rejected? 2026 guide",
+      "url": "https://woopsocial.com/blog/meta-app-review-rejected-2026-fix-guide",
+      "kind": "community",
+      "quote": "roughly 20 days to go through a normal review",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "m17",
+      "title": "Iskaria's own Meta app, 2026",
+      "url": "https://iskaria.com/",
+      "kind": "our-test",
+      "quote": "App holds pages_messaging, pages_read_engagement, instagram_manage_messages/comments, ads_management, business_management; not pages_manage_posts or instagram_content_publish.",
+      "accessed": "2026-10-30"
+    }
+  ],
+  "meta": {
+    "generatedBy": "seed-research",
+    "generatedAt": "2026-10-30",
+    "verification": [
+      {
+        "claim": "Instagram posting/messaging always needs a Facebook Page link and instagram_content_publish / instagram_manage_messages",
+        "method": "Fetched Instagram Platform overview",
+        "result": "corrected",
+        "note": "True only for the Facebook Login path. Instagram API with Instagram Login uses instagram_business_content_publish / instagram_business_manage_messages and needs no linked Page."
+      },
+      {
+        "claim": "Embedded Signup onboarding is capped at 10 new customers per 7 days until verification, then 200",
+        "method": "Fetched Embedded Signup overview",
+        "result": "confirmed"
+      },
+      {
+        "claim": "App Review returns a decision within about a week",
+        "method": "Fetched Meta submission guide; compared with 2026 developer reports",
+        "result": "unverified",
+        "note": "Official guide says within a week. 2026 third-party reports say ~20 days per cycle, so treat a week as the best case."
+      },
+      {
+        "claim": "A data deletion callback is mandatory",
+        "method": "Fetched data deletion callback doc",
+        "result": "corrected",
+        "note": "Either a callback URL or a deletion instructions URL satisfies the requirement. Iskaria's instructions page is enough."
+      },
+      {
+        "claim": "Development mode limits permission requests to role users",
+        "method": "Fetched App Modes and Access Levels docs",
+        "result": "confirmed"
+      },
+      {
+        "claim": "Tech Provider Access Verification takes ~5 business days",
+        "method": "Meta forum threads quoting the dashboard (Sep-Oct 2026)",
+        "result": "unverified",
+        "note": "The dashboard states it, but several developers report 9+ business days."
+      }
+    ]
+  }
+}

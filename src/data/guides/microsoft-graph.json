@@ -1,0 +1,599 @@
+{
+  "slug": "microsoft-graph",
+  "app": "Microsoft (Graph: Outlook mail and calendar)",
+  "website": "https://entra.microsoft.com",
+  "category": "Email",
+  "summary": "Registering a multitenant Entra ID app and getting a token for your own account takes under an hour and costs nothing. The catch is on the customer side: since the 2025 Microsoft-managed consent policy (the default for new tenants), ordinary users cannot consent to Mail.Read or Calendars.ReadWrite at all, so each clinic's Microsoft 365 admin must grant admin consent once. Publisher verification (free, needs a verified Microsoft AI Cloud Partner Program account, about 3-5 business days) removes the 'unverified' warning but does not lift that admin-consent requirement.",
+  "verdict": {
+    "difficulty": "moderate",
+    "timeToFirstToken": "30-45 min",
+    "timeToLaunch": "1-2 weeks",
+    "launchNote": "1-2 weeks (Partner Center business verification is typically 3-5 business days; then per-customer admin consent).",
+    "reviewRequired": "No app review by Microsoft. Publisher verification (Partner Center business verification + linking the Partner One ID) is strongly recommended; each customer tenant's admin must grant consent for mail/calendar scopes under the default policy.",
+    "cost": "Free",
+    "costNote": "free (publisher verification and Partner Program membership are free; Microsoft 365 Certification audit is paid and optional)",
+    "evidence": {
+      "status": "sourced",
+      "sourceIds": [
+        "s1",
+        "s4",
+        "s7"
+      ],
+      "note": "Hands-on times are our estimate; the 3-5 business days is Microsoft's stated typical for Partner Center verification."
+    }
+  },
+  "testMode": {
+    "available": true,
+    "limits": "No separate test mode: the app works immediately for your own tenant and for any tenant whose admin consents. In tenants with the Microsoft-managed (default) policy, non-admin users cannot self-consent to Mail.Read / Calendars.ReadWrite; test with an account that is an admin in its tenant (e.g. your own iskaria.com tenant).",
+    "evidence": {
+      "status": "sourced",
+      "sourceIds": [
+        "s2",
+        "s3"
+      ],
+      "note": "That there is no explicit sandbox/test-user cap is inferred from the absence of one in the registration docs."
+    }
+  },
+  "prerequisites": [
+    {
+      "item": "Microsoft Entra work/school tenant (e.g. one for iskaria.com) and an account with at least the Application Developer role. Apps registered with a personal Microsoft account cannot be publisher verified.",
+      "requiredFor": "build",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s1",
+          "s4"
+        ]
+      }
+    },
+    {
+      "item": "HTTPS redirect URI on a server (Web platform); http://localhost is accepted for local development",
+      "profileKey": "redirectUris",
+      "requiredFor": "build",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s5"
+        ]
+      }
+    },
+    {
+      "item": "Microsoft AI Cloud Partner Program account (Partner One ID of the partner global account) that has passed Partner Center verification: email, identity, employment and business (legal registration) checks. Profile: businessVerification.microsoftPartnerId is null and legalEntity is null, so this is MISSING.",
+      "profileKey": "businessVerification.microsoftPartnerId",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s4",
+          "s7"
+        ]
+      }
+    },
+    {
+      "item": "Legal entity registration documents (certificate of incorporation, business licence) whose name and address match the Partner Center account exactly. Profile legalEntity is null: MISSING.",
+      "profileKey": "legalEntity",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s7"
+        ]
+      }
+    },
+    {
+      "item": "Publisher domain set on the app, not *.onmicrosoft.com; the Partner Center verification email's domain must match it or be a DNS-verified custom domain in the Entra tenant. Profile only records Google Search Console verification for iskaria.com; iskaria.com must also be DNS-verified in the Entra tenant.",
+      "profileKey": "authorizedDomains",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s4"
+        ]
+      }
+    },
+    {
+      "item": "Business email on the company domain for the Partner Center primary contact (not a free/personal address)",
+      "profileKey": "developerContactEmail",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s7"
+        ]
+      }
+    },
+    {
+      "item": "Privacy statement and terms of service URLs (shown in the consent prompt via Branding & properties)",
+      "profileKey": "privacyPolicyUrl",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "inferred",
+        "sourceIds": [],
+        "note": "Branding fields not re-fetched this session; standard on the Branding & properties blade."
+      }
+    }
+  ],
+  "steps": [
+    {
+      "title": "Register a multitenant app",
+      "who": "you",
+      "phase": "build",
+      "detail": "Sign in to the Microsoft Entra admin center as at least Application Developer, in your company tenant. Entra ID > App registrations > New registration. Name: Iskaria. Supported account types: 'Multiple Entra ID tenants' (organisations only; clinics use work accounts). Pick 'Any Entra ID Tenant + Personal Microsoft accounts' only if you also want Outlook.com users. Register, then record the Application (client) ID.",
+      "url": "https://entra.microsoft.com",
+      "estimate": "5 min",
+      "fields": [
+        {
+          "label": "Name",
+          "profileKey": "appName"
+        },
+        {
+          "label": "Supported account types",
+          "note": "Multiple Entra ID tenants"
+        }
+      ],
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s1"
+        ],
+        "note": "The option labels were renamed (formerly 'Accounts in any organizational directory (Any Microsoft Entra ID tenant - Multitenant)')."
+      }
+    },
+    {
+      "title": "Add the Web redirect URIs",
+      "who": "agent-then-you",
+      "phase": "build",
+      "detail": "App registration > Authentication > Add Redirect URI > Web. Add https://app.iskaria.com/api/oauth/microsoft/callback and, for development, http://localhost:3000/api/oauth/microsoft/callback. Configure.",
+      "estimate": "3 min",
+      "fields": [
+        {
+          "label": "Redirect URI",
+          "profileKey": "redirectUris"
+        }
+      ],
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s5"
+        ]
+      }
+    },
+    {
+      "title": "Create a credential (secret now, certificate for production)",
+      "who": "you",
+      "phase": "build",
+      "detail": "Certificates & secrets. For development: Client secrets > New client secret; lifetime is capped at 24 months and Microsoft recommends under 12; copy the Value immediately (never shown again). For production Microsoft says not to use secrets: upload a certificate (.cer/.pem/.crt) and keep the private key in a vault, or use a federated credential. Put a calendar reminder before expiry either way.",
+      "estimate": "5-20 min",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s3"
+        ]
+      }
+    },
+    {
+      "title": "Add delegated Graph permissions",
+      "who": "agent-then-you",
+      "phase": "build",
+      "detail": "API permissions > Add a permission > Microsoft Graph > Delegated permissions: User.Read (default), offline_access, Mail.Read, Mail.Send, Calendars.ReadWrite. Request the same scopes in the authorization request (https://graph.microsoft.com/Mail.Read etc.). Do not add application permissions unless you need unattended access to every mailbox.",
+      "estimate": "5 min",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s6",
+          "s2"
+        ]
+      }
+    },
+    {
+      "title": "Set branding and publisher domain",
+      "who": "agent-then-you",
+      "phase": "build",
+      "detail": "Branding & properties: logo, home page, terms and privacy URLs, and set the publisher domain to iskaria.com (requires iskaria.com to be added and DNS-verified as a custom domain in the tenant; a TXT record).",
+      "estimate": "15 min + DNS propagation",
+      "fields": [
+        {
+          "label": "Home page URL",
+          "profileKey": "homepageUrl"
+        },
+        {
+          "label": "Terms of service URL",
+          "profileKey": "termsUrl"
+        },
+        {
+          "label": "Privacy statement URL",
+          "profileKey": "privacyPolicyUrl"
+        },
+        {
+          "label": "Logo",
+          "profileKey": "logo.square512Png",
+          "note": "Profile has no exported PNG yet"
+        },
+        {
+          "label": "Publisher domain",
+          "profileKey": "authorizedDomains"
+        }
+      ],
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s4",
+          "s8"
+        ],
+        "note": "Logo and URL field names not re-fetched; publisher-domain rule is sourced."
+      }
+    },
+    {
+      "title": "Get your first token in your own tenant",
+      "who": "agent-then-you",
+      "phase": "test",
+      "detail": "Implement the authorization-code flow against the /common (or /organizations) endpoint, sign in with your own admin account, consent, and call GET /me/messages and /me/events. Check the refresh token arrives (requires offline_access).",
+      "estimate": "15-30 min",
+      "evidence": {
+        "status": "inferred",
+        "sourceIds": [],
+        "note": "Standard flow; not executed by us."
+      }
+    },
+    {
+      "title": "Join the Microsoft AI Cloud Partner Program and pass verification",
+      "who": "you",
+      "phase": "launch",
+      "detail": "Enrol in Partner Center with a Global Admin of the tenant. Provide legal business name/address matching registration documents, a business-domain email, identity document, and domain registration documents. Microsoft runs email, identity, employment and business checks; typically 3-5 business days, longer if more information is requested.",
+      "url": "https://partner.microsoft.com/membership",
+      "estimate": "1 h hands-on, 3-5 business days wait",
+      "fields": [
+        {
+          "label": "Legal business name",
+          "profileKey": "legalEntity",
+          "note": "MISSING in profile"
+        },
+        {
+          "label": "Primary contact email",
+          "profileKey": "developerContactEmail"
+        },
+        {
+          "label": "Country",
+          "profileKey": "country",
+          "note": "Must match the registered entity's jurisdiction"
+        }
+      ],
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s7"
+        ]
+      }
+    },
+    {
+      "title": "Mark the app publisher verified",
+      "who": "you",
+      "phase": "launch",
+      "detail": "Sign in with MFA as Application Administrator / Cloud Application Administrator who is also Partner Admin or Account Admin in Partner Center. App registrations > the app > Branding & properties > Add Partner ID to verify publisher > enter the Partner One ID of the partner global account (not a location ID) > Verify and save. The blue verified badge then shows on consent prompts.",
+      "estimate": "10 min",
+      "fields": [
+        {
+          "label": "Partner ID",
+          "profileKey": "businessVerification.microsoftPartnerId",
+          "note": "MISSING in profile"
+        }
+      ],
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s8",
+          "s4"
+        ]
+      }
+    },
+    {
+      "title": "Onboard each clinic: admin consent",
+      "who": "you",
+      "phase": "launch",
+      "detail": "For each customer tenant on the default 'Let Microsoft manage your consent settings' policy, a Global/Application/Cloud Application Administrator of that tenant must grant admin consent (sign in and tick 'Consent on behalf of your organization', or approve via that tenant's admin consent workflow). Provide clinics a short admin-consent instruction page.",
+      "estimate": "5-10 min per clinic (their admin)",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s2",
+          "s9"
+        ]
+      }
+    },
+    {
+      "title": "Optional: Microsoft 365 Publisher Attestation",
+      "who": "agent-then-you",
+      "phase": "launch",
+      "detail": "Self-assessment of security, data handling and compliance published on Microsoft's App Compliance pages; most take about an hour. Full Microsoft 365 Certification is a yearly paid third-party audit (Claranet) and only worth it if enterprise customers demand it.",
+      "estimate": "1 h (attestation)",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s10"
+        ]
+      }
+    }
+  ],
+  "scopes": [
+    {
+      "name": "offline_access",
+      "purpose": "Refresh tokens so the assistant keeps working without the clinic signing in again",
+      "tier": "basic",
+      "note": "One of the five permissions Entra classifies as low impact by default.",
+      "evidence": {
+        "status": "inferred",
+        "sourceIds": [],
+        "note": "Low-impact default list from a community summary (keeno.uk), not re-checked on Learn."
+      }
+    },
+    {
+      "name": "Mail.Read",
+      "purpose": "Read patient emails in the clinic mailbox so the assistant can draft replies",
+      "tier": "sensitive",
+      "note": "Delegated, not admin-consent-required by Graph itself, but EXCLUDED from user consent by the Microsoft-managed default policy: needs tenant admin consent in most customer tenants.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s2"
+        ]
+      }
+    },
+    {
+      "name": "Mail.Send",
+      "purpose": "Send patient follow-up emails as the signed-in staff member",
+      "tier": "sensitive",
+      "note": "Not on the Microsoft-managed exclusion list as of the 2026-01-22 doc, so users can self-consent unless their admin restricted consent. Moot when requested together with Mail.Read.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s2"
+        ]
+      }
+    },
+    {
+      "name": "Calendars.ReadWrite",
+      "purpose": "Read availability and create/update appointment events",
+      "tier": "sensitive",
+      "note": "Graph lists AdminConsentRequired = No for delegated, but the Microsoft-managed default policy excludes it from user consent.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s6",
+          "s2"
+        ]
+      }
+    },
+    {
+      "name": "User.Read",
+      "purpose": "Sign-in and basic profile (which staff member connected)",
+      "tier": "basic",
+      "note": "Added to every new registration by default.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s1"
+        ]
+      }
+    }
+  ],
+  "blockers": [
+    {
+      "title": "Default consent policy blocks user consent to mail and calendar",
+      "detail": "'Let Microsoft manage your consent settings' (microsoft-user-default-recommended) is the default for new tenants and lets users consent to anything EXCEPT a list that includes Mail.Read, Mail.ReadWrite, Calendars.Read, Calendars.ReadWrite, Contacts.ReadWrite, Files.Read.All and others. Rolled out from mid-2025 (files/sites first, then Exchange/Teams permissions around Oct-Nov 2025). Publisher verification does not change this.",
+      "severity": "can-block-launch",
+      "workaround": "Plan onboarding around a clinic admin granting tenant-wide admin consent; small clinics often have one IT person or an MSP. Or drop Mail.Read and use only Mail.Send if reading is not needed.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s2",
+          "s11"
+        ],
+        "note": "Rollout dates from community post; exclusion list from Learn."
+      }
+    },
+    {
+      "title": "Unverified publisher warning / risk-based step-up",
+      "detail": "Since November 2020, if risk-based step-up consent is enabled, users cannot consent to multitenant apps registered after 8 Nov 2020 that are not publisher verified and request more than sign-in/profile; a warning says the app is from an unverified publisher. Tenants using 'Allow user consent for apps from verified publishers' also block you until verified.",
+      "severity": "can-block-launch",
+      "workaround": "Complete publisher verification before onboarding external clinics.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s4",
+          "s9"
+        ]
+      }
+    },
+    {
+      "title": "Partner Center business verification needs a registered legal entity",
+      "detail": "Verification checks that the business is legally registered at the stated address and that the primary contact is an employee, using formation documents and domain registration documents. The profile has no legalEntity; a mismatch between documents and account (spelling, abbreviations) causes rejection.",
+      "severity": "slows-you-down",
+      "workaround": "Use the exact registered name/address from the UAE or Indian incorporation certificate; appeal if rejected.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s7"
+        ]
+      }
+    },
+    {
+      "title": "Publisher domain must be DNS-verified in Entra",
+      "detail": "Publisher domain cannot be *.onmicrosoft.com, and the Partner Center email domain must match it or a DNS-verified custom domain in the tenant. Google Search Console verification does not count.",
+      "severity": "slows-you-down",
+      "workaround": "Add iskaria.com as a custom domain in the Entra tenant (TXT record) before starting verification.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s4"
+        ]
+      }
+    },
+    {
+      "title": "Client secrets expire (max 24 months) and are discouraged in production",
+      "detail": "Secrets cannot exceed 24 months; Microsoft recommends under 12 and says secrets should not be used in production. An expired secret silently breaks every clinic's connection.",
+      "severity": "info",
+      "workaround": "Use a certificate stored in a key vault, monitor expiry, and keep two overlapping credentials during rotation.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s3"
+        ]
+      }
+    }
+  ],
+  "agentHandoff": {
+    "agentCan": [
+      "Write the OAuth authorization-code flow, token storage and refresh code",
+      "Prepare the exact redirect URIs, scope list and branding text to paste",
+      "Generate a self-signed certificate for testing and the code to use certificate credentials",
+      "Draft the clinic-facing admin-consent instructions and the Publisher Attestation answers",
+      "Draft Graph calls for /me/messages, /me/sendMail and /me/events and test them once a token exists"
+    ],
+    "youMust": [
+      "Sign in to the Entra admin center (MFA) and create the registration and credentials",
+      "Add and DNS-verify iskaria.com in the Entra tenant",
+      "Enrol in the Microsoft AI Cloud Partner Program and upload legal/identity documents",
+      "Enter the Partner One ID to mark the app publisher verified",
+      "Get each clinic's Microsoft 365 admin to grant admin consent"
+    ]
+  },
+  "uncertainties": [
+    "Whether Mail.Send stays user-consentable: the Microsoft-managed exclusion list is updated by Microsoft (with at least 30 days' notice per a community summary) and could grow.",
+    "Which existing customer tenants actually run the Microsoft-managed policy vs. legacy 'Allow user consent for apps' or 'Do not allow user consent'; it varies per tenant and older tenants may differ.",
+    "Partner Center verification for an India/UAE entity: Microsoft states 3-5 business days typical; real-world times with document requests are anecdotally longer and not documented.",
+    "Exact Branding & properties field names were not re-fetched this session.",
+    "offline_access low-impact classification is from a community summary, not the Learn page."
+  ],
+  "sources": [
+    {
+      "id": "s1",
+      "title": "How to register an app in Microsoft Entra ID",
+      "url": "https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app",
+      "kind": "official-docs",
+      "quote": "For multitenant apps when you want users in any Microsoft Entra tenant to be able to use your application.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s2",
+      "title": "Manage app consent policies (Microsoft recommended user consent policy)",
+      "url": "https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/manage-app-consent-policies",
+      "kind": "official-docs",
+      "quote": "This is also the default for a new tenant. The setting's rules are currently: End users can consent for any user consentable delegated permissions EXCEPT",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s3",
+      "title": "Add and manage app credentials in Microsoft Entra ID",
+      "url": "https://learn.microsoft.com/en-us/entra/identity-platform/how-to-add-credentials",
+      "kind": "official-docs",
+      "quote": "Client secret lifetime is limited to two years (24 months) or less. You can't specify a custom lifetime longer than 24 months.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s4",
+      "title": "Publisher verification overview",
+      "url": "https://learn.microsoft.com/en-us/entra/identity-platform/publisher-verification-overview",
+      "kind": "official-docs",
+      "quote": "The developer must have a Partner One ID for a valid Microsoft AI Cloud Partner Program account that has completed the verification process.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s5",
+      "title": "How to add a redirect URI to your application",
+      "url": "https://learn.microsoft.com/en-us/entra/identity-platform/how-to-add-redirect-uri",
+      "kind": "official-docs",
+      "quote": "Redirect URIs are configured on the Authentication page in the Microsoft Entra admin center.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s6",
+      "title": "Microsoft Graph permissions reference",
+      "url": "https://learn.microsoft.com/en-us/graph/permissions-reference",
+      "kind": "official-docs",
+      "quote": "AdminConsentRequired | Yes | No",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s7",
+      "title": "Understand the verification process in Partner Center",
+      "url": "https://learn.microsoft.com/en-us/partner-center/enroll/understand-the-verification-process",
+      "kind": "official-docs",
+      "quote": "In most cases, the process takes three to five business days to complete.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s8",
+      "title": "Mark an app as publisher verified",
+      "url": "https://learn.microsoft.com/en-us/entra/identity-platform/mark-app-as-publisher-verified",
+      "kind": "official-docs",
+      "quote": "Select Add Partner ID to verify publisher near the bottom of the page.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s9",
+      "title": "Configure how users consent to applications",
+      "url": "https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-user-consent",
+      "kind": "official-docs",
+      "quote": "we recommend that you allow user consent only for applications that have been published by a verified publisher.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s10",
+      "title": "Microsoft 365 App Compliance Program overview",
+      "url": "https://learn.microsoft.com/en-us/microsoft-365-app-certification/overview",
+      "kind": "official-docs",
+      "quote": "Most attestations can be completed in one hour or less (depending on app/agent framework).",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s11",
+      "title": "Microsoft-managed default app consent policy now blocks 20 additional permissions (Topedia)",
+      "url": "https://blog-en.topedia.com/2025/11/microsoft-managed-default-app-consent-policy-now-blocks-20-additional-permissions/",
+      "kind": "community",
+      "quote": "These new permissions are now rolling out and include 20 additional excluded permissions for Outlook Mailbox, Outlook Mail, Outlook Calendar, Teams Chat, and Teams Meetings.",
+      "accessed": "2026-10-30"
+    }
+  ],
+  "meta": {
+    "generatedBy": "seed-research",
+    "generatedAt": "2026-10-30",
+    "verification": [
+      {
+        "claim": "Since 2020 the default tenant policy blocks user consent to apps from unverified publishers",
+        "method": "Fetched publisher-verification-overview and manage-app-consent-policies",
+        "result": "corrected",
+        "note": "The Nov 2020 block applies only where risk-based step-up consent is enabled. The current default (Microsoft-managed policy) instead blocks user consent to Mail.Read/Calendars.* regardless of publisher verification."
+      },
+      {
+        "claim": "Mail.Read and Calendars.ReadWrite are user-consentable delegated permissions",
+        "method": "Graph permissions reference (Calendars.ReadWrite AdminConsentRequired = No) cross-checked against the Microsoft-managed exclusion list on Learn and a Nov 2025 community post",
+        "result": "corrected",
+        "note": "Technically user-consentable, but excluded from user consent by the default policy since the 2025 rollout."
+      },
+      {
+        "claim": "Client secrets max 24 months",
+        "method": "Fetched how-to-add-credentials",
+        "result": "confirmed",
+        "note": "Microsoft also recommends under 12 months and says secrets should not be used in production."
+      },
+      {
+        "claim": "Publisher verification needs an MPN ID",
+        "method": "Fetched publisher-verification-overview and mark-app-as-publisher-verified",
+        "result": "corrected",
+        "note": "MPN is now the Microsoft AI Cloud Partner Program; the field is the Partner One ID of the partner global account, location IDs are rejected."
+      },
+      {
+        "claim": "Supported account type is called 'Accounts in any organizational directory'",
+        "method": "Fetched quickstart-register-app (ms.date 2026-05-14)",
+        "result": "corrected",
+        "note": "Labels are now 'Multiple Entra ID tenants' and 'Any Entra ID Tenant + Personal Microsoft accounts'; navigation is Entra ID > App registrations."
+      },
+      {
+        "claim": "Partner Center verification takes days",
+        "method": "Fetched Partner Center verification process page",
+        "result": "confirmed",
+        "note": "Three to five business days in most cases."
+      }
+    ]
+  }
+}

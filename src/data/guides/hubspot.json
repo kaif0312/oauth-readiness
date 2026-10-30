@@ -1,0 +1,526 @@
+{
+  "slug": "hubspot",
+  "app": "HubSpot (CRM API)",
+  "website": "https://developers.hubspot.com",
+  "category": "CRM",
+  "summary": "Building a HubSpot OAuth app is quick (under an hour with the CLI) and free, but it must be a Projects-based app now: legacy public app creation was switched off in May-June 2026. A marketplace-distribution app is capped at 25 installs until it is listed on the HubSpot Marketplace, and listing needs at least three active installs in production accounts not affiliated with you, plus a manual review (first response within 10 business days, up to 60 days overall).",
+  "verdict": {
+    "difficulty": "moderate",
+    "timeToFirstToken": "30-60 min",
+    "timeToLaunch": "Same day (25 installs)",
+    "launchNote": "Immediate for up to 25 clinics; 3-10 weeks to lift the cap via Marketplace listing (time to reach 3 active unaffiliated installs + 10 business days first review, up to 60 days).",
+    "reviewRequired": "None for the first 25 installs. Beyond 25: Marketplace listing review by HubSpot's Ecosystem Quality team. Certification is optional (60+ active installs, 6 months listed).",
+    "cost": "Free",
+    "evidence": {
+      "status": "sourced",
+      "sourceIds": [
+        "s1",
+        "s2",
+        "s3"
+      ],
+      "note": "Hands-on times are our estimate."
+    }
+  },
+  "testMode": {
+    "available": true,
+    "limits": "Developer test accounts let you install and test in isolation. Unlisted marketplace-distribution apps: max 25 installs. Private-distribution OAuth apps: max 10 customer accounts (100 for Solution Partners).",
+    "evidence": {
+      "status": "sourced",
+      "sourceIds": [
+        "s1",
+        "s4"
+      ]
+    }
+  },
+  "prerequisites": [
+    {
+      "item": "HubSpot developer account (free) and HubSpot CLI v7.6.0+ authenticated with hs account auth",
+      "requiredFor": "build",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s4"
+        ]
+      }
+    },
+    {
+      "item": "HTTPS OAuth redirect URL(s) declared in app-hsmeta.json",
+      "profileKey": "redirectUris",
+      "requiredFor": "build",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s4"
+        ]
+      }
+    },
+    {
+      "item": "At least three active, unique installs in HubSpot production accounts unaffiliated with Iskaria (successful API activity in the past 30 days)",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s2"
+        ]
+      }
+    },
+    {
+      "item": "Live Terms of Service and Privacy Policy URLs",
+      "profileKey": "privacyPolicyUrl",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s2"
+        ]
+      }
+    },
+    {
+      "item": "Public setup documentation specific to the HubSpot integration (HubSpot provides a template). Not in the profile: MISSING.",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s2"
+        ]
+      }
+    },
+    {
+      "item": "At least one support contact method and live support resource URL",
+      "profileKey": "supportUrl",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s2"
+        ]
+      }
+    },
+    {
+      "item": "App logo / listing images. Profile logo.square512Png is null: MISSING.",
+      "profileKey": "logo.square512Png",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "inferred",
+        "sourceIds": [],
+        "note": "Image specs for the listing were not fetched this session."
+      }
+    }
+  ],
+  "steps": [
+    {
+      "title": "Create a developer account and a test account",
+      "who": "you",
+      "phase": "build",
+      "detail": "Sign up for a free HubSpot developer account. In it, Development > Test accounts > Create developer test account, for isolated installs.",
+      "url": "https://developers.hubspot.com",
+      "estimate": "10 min",
+      "fields": [
+        {
+          "label": "Company name",
+          "profileKey": "companyName"
+        },
+        {
+          "label": "Email",
+          "profileKey": "developerContactEmail"
+        }
+      ],
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s4"
+        ]
+      }
+    },
+    {
+      "title": "Install and authenticate the HubSpot CLI",
+      "who": "agent-then-you",
+      "phase": "build",
+      "detail": "npm install -g @hubspot/cli (v7.6.0 or later), then hs account auth: the human pastes a personal access key from the browser.",
+      "estimate": "5 min",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s4"
+        ],
+        "note": "npm package name is from general knowledge; the version requirement is sourced."
+      }
+    },
+    {
+      "title": "Scaffold a Projects-based app",
+      "who": "agent",
+      "phase": "build",
+      "detail": "hs project create with the app boilerplate. Choose marketplace distribution (multi-tenant; not restricted to specific accounts) and OAuth auth. Do not build a legacy public app: creation was disabled 26 May 2026 (new accounts) / 23 June 2026 (existing accounts). Target the current platform version (2026.09); 2025.2 must migrate by March 2027.",
+      "estimate": "10 min",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s4",
+          "s5",
+          "s6"
+        ]
+      }
+    },
+    {
+      "title": "Configure app-hsmeta.json: uid, redirect URLs, scopes",
+      "who": "agent",
+      "phase": "build",
+      "detail": "Set a unique uid, config.distribution = \"marketplace\", config.auth.type = \"oauth\", redirectUrls = [\"https://app.iskaria.com/api/oauth/hubspot/callback\", \"http://localhost:3000/api/oauth/hubspot/callback\"], requiredScopes = crm.objects.contacts.read/write and crm.objects.deals.read/write (oauth is added automatically). Put anything not always needed in optionalScopes or conditionallyRequiredScopes.",
+      "estimate": "10 min",
+      "fields": [
+        {
+          "label": "redirectUrls",
+          "profileKey": "redirectUris",
+          "note": "Localhost redirect acceptance not verified"
+        },
+        {
+          "label": "name / description",
+          "profileKey": "appDescription"
+        }
+      ],
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s4",
+          "s7"
+        ]
+      }
+    },
+    {
+      "title": "Upload and build the project",
+      "who": "agent",
+      "phase": "build",
+      "detail": "hs project upload; each upload triggers a build. Copy the client ID and secret from the app's Auth page in the developer account.",
+      "estimate": "5 min",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s4"
+        ],
+        "note": "Location of client ID/secret in the UI is inferred."
+      }
+    },
+    {
+      "title": "Install into a test account and get a token",
+      "who": "agent-then-you",
+      "phase": "test",
+      "detail": "Open the install URL, choose the developer test account, approve. Exchange the code for access + refresh tokens and call the CRM contacts and deals endpoints using date-based API versions (not v1-v4, which lose certification after September 2027).",
+      "estimate": "15-30 min",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s6"
+        ],
+        "note": "Install flow details inferred; API-version guidance sourced."
+      }
+    },
+    {
+      "title": "Roll out to the first clinics (up to 25)",
+      "who": "you",
+      "phase": "launch",
+      "detail": "Clinics install via the OAuth link. Up to 25 installs need no review. Get at least three clinics, outside Iskaria, actively syncing (API calls in the last 30 days) to qualify for listing.",
+      "estimate": "ongoing",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s1",
+          "s2"
+        ]
+      }
+    },
+    {
+      "title": "Submit a Marketplace listing (to lift the 25-install cap)",
+      "who": "agent-then-you",
+      "phase": "launch",
+      "detail": "From the developer account create the listing: integration-specific description, setup docs URL, ToS/privacy URLs, support contact, scopes matching what the app actually uses, agree to the App Partner Program Agreement. Follow HubSpot branding rules (capital S in HubSpot; no 'Hub'/'HubSpot' in the app name or logo). Initial review within 10 business days; whole process up to 60 days.",
+      "estimate": "2-3 h hands-on",
+      "fields": [
+        {
+          "label": "Privacy policy URL",
+          "profileKey": "privacyPolicyUrl"
+        },
+        {
+          "label": "Terms of service URL",
+          "profileKey": "termsUrl"
+        },
+        {
+          "label": "Support URL",
+          "profileKey": "supportUrl"
+        },
+        {
+          "label": "Support email",
+          "profileKey": "supportEmail"
+        },
+        {
+          "label": "Setup documentation URL",
+          "note": "MISSING in profile"
+        }
+      ],
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s2"
+        ]
+      }
+    },
+    {
+      "title": "Optional: apply for app certification",
+      "who": "agent-then-you",
+      "phase": "launch",
+      "detail": "Eligible after 6 months listed with 60+ active unique installs. Reviewed for security, privacy, reliability, performance, usability, accessibility and value; response within 10 business days.",
+      "estimate": "half a day",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s3"
+        ]
+      }
+    }
+  ],
+  "scopes": [
+    {
+      "name": "crm.objects.contacts.read",
+      "purpose": "Look up existing patients/leads before creating duplicates",
+      "tier": "basic",
+      "note": "Available to all accounts.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s7"
+        ]
+      }
+    },
+    {
+      "name": "crm.objects.contacts.write",
+      "purpose": "Create and update leads from WhatsApp/Instagram enquiries",
+      "tier": "basic",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s7"
+        ]
+      }
+    },
+    {
+      "name": "crm.objects.deals.read",
+      "purpose": "Read booking/deal stages for reporting",
+      "tier": "basic",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s7"
+        ]
+      }
+    },
+    {
+      "name": "crm.objects.deals.write",
+      "purpose": "Create deals for bookings and move them through stages",
+      "tier": "basic",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s7"
+        ]
+      }
+    },
+    {
+      "name": "oauth",
+      "purpose": "Base OAuth scope",
+      "tier": "basic",
+      "note": "Added by default to all apps; do not list it yourself.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s7"
+        ]
+      }
+    }
+  ],
+  "blockers": [
+    {
+      "title": "25-install cap until listed",
+      "detail": "Since 22 Sep 2025, marketplace-distribution apps created on or migrated to the Projects platform are capped at 25 installs until approved for the Marketplace. Legacy public apps with more than 25 installs get the cap enforced when migrated.",
+      "severity": "can-block-launch",
+      "workaround": "Start the listing as soon as three clinics are actively using it; for a handful of clinics, private distribution (10 accounts) also works.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s1"
+        ]
+      }
+    },
+    {
+      "title": "Listing needs 3 active installs from unaffiliated production accounts",
+      "detail": "Active installs count unique production accounts unaffiliated with your organisation with API/webhook activity in the past 30 days. Your own test or sandbox accounts do not count, despite some blogs saying they do.",
+      "severity": "slows-you-down",
+      "workaround": "Onboard three real clinic HubSpot accounts first (Dr. Namshi's, Dr. Jefna's if they use HubSpot).",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s2",
+          "s8"
+        ]
+      }
+    },
+    {
+      "title": "Unused or unneeded scopes get the listing rejected",
+      "detail": "The app must use every scope it requests; unused ones must be removed, and scopes only some users need must be conditionally required or optional.",
+      "severity": "slows-you-down",
+      "workaround": "Keep to the four CRM scopes above; exercise each in normal operation.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s2"
+        ]
+      }
+    },
+    {
+      "title": "Platform churn: 2025.2 and legacy apps go unsupported",
+      "detail": "Legacy public apps went unsupported 15 Sep 2026 (enforcement Sep 2027; delisting risk). Projects 2025.2 apps must migrate to 2026.09 by March 2027. Apps using v1-v4 APIs after Sep 2027 lose certification; use date-based versioning.",
+      "severity": "info",
+      "workaround": "Build on 2026.09 with date-based API versions from the start.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s6"
+        ]
+      }
+    },
+    {
+      "title": "Restricted industries",
+      "detail": "Listed apps must not cater to or be exclusive to customers in HubSpot's restricted industries. Whether healthcare clinics fall under any restriction was not verified; HubSpot's HIPAA stance matters for patient data.",
+      "severity": "info",
+      "evidence": {
+        "status": "inferred",
+        "sourceIds": [
+          "s2"
+        ],
+        "note": "The requirement is sourced (Japanese mirror of the page); its application to clinics is not."
+      }
+    }
+  ],
+  "agentHandoff": {
+    "agentCan": [
+      "Install the CLI, scaffold the project and write app-hsmeta.json",
+      "Run hs project upload and fix build errors",
+      "Implement the OAuth code exchange, token refresh and CRM contact/deal sync",
+      "Draft the setup documentation page and the Marketplace listing text",
+      "Check that every requested scope is actually used"
+    ],
+    "youMust": [
+      "Create the developer account and paste the personal access key for hs account auth",
+      "Approve installs in the test account and in each clinic's HubSpot",
+      "Recruit three unaffiliated clinic accounts to use it actively",
+      "Accept the App Partner Program Agreement and submit the listing"
+    ]
+  },
+  "uncertainties": [
+    "Exact string for private distribution in app-hsmeta.json was not shown in the doc example (only \"marketplace\").",
+    "Whether http://localhost redirect URLs are accepted by the Projects platform was not verified.",
+    "Real review wait beyond HubSpot's stated 10 business days / 60 days is anecdotal.",
+    "Whether an unlisted app shows an extra warning at install is from a third-party write-up only (unified.to), not verified.",
+    "Listing image/logo specs and whether a demo video is currently required were not confirmed; the English requirements page as summarised did not mention them.",
+    "Restricted-industry implications for healthcare clinics not checked."
+  ],
+  "sources": [
+    {
+      "id": "s1",
+      "title": "New Marketplace Distribution App Install Limits (changelog)",
+      "url": "https://developers.hubspot.com/changelog/new-marketplace-distribution-app-install-limits",
+      "kind": "official-docs",
+      "quote": "apps that are created or migrated to version 2025.2 are capped at 25 installs",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s2",
+      "title": "App listing requirements in the HubSpot Marketplace",
+      "url": "https://developers.hubspot.com/docs/apps/developer-platform/list-apps/listing-your-app/app-marketplace-listing-requirements",
+      "kind": "provider-policy",
+      "quote": "Installs: your app must have at least three active, unique installs.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s3",
+      "title": "App certification requirements",
+      "url": "https://developers.hubspot.com/docs/apps/developer-platform/list-apps/apply-for-certification/certification-requirements",
+      "kind": "provider-policy",
+      "quote": "Your app must have at least 60 active, unique installs to qualify for and retain certification.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s4",
+      "title": "Create an app (developer platform)",
+      "url": "https://developers.hubspot.com/docs/apps/developer-platform/build-apps/create-an-app",
+      "kind": "official-docs",
+      "quote": "Make sure you're using v7.6.0 of the HubSpot CLI before proceeding.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s5",
+      "title": "Legacy Public App Creation Sunset (changelog)",
+      "url": "https://developers.hubspot.com/changelog/legacy-public-app-creation-sunset",
+      "kind": "official-docs",
+      "quote": "Beginning May 26, 2026, the ability to create new legacy public apps via the Developer Platform UI will be permanently disabled.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s6",
+      "title": "Legacy APIs and Apps: What's Going Unsupported and When (changelog)",
+      "url": "https://developers.hubspot.com/changelog/legacy-apis-and-legacy-apps-whats-going-unsupported-and-when",
+      "kind": "official-docs",
+      "quote": "Apps on the Projects 2025.2 framework, or older, need to migrate to the current version (2026.09) by March 2027.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s7",
+      "title": "Scopes",
+      "url": "https://developers.hubspot.com/docs/apps/developer-platform/build-apps/authentication/scopes",
+      "kind": "official-docs",
+      "quote": "Basic scope required for OAuth. This scope is added by default to all apps.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s8",
+      "title": "HubSpot App Marketplace: Listing Requirements for ISVs (appnigma)",
+      "url": "https://appnigma.ai/blogs/hubspot-marketplace-complete-guide/",
+      "kind": "community",
+      "quote": "Sandboxes count, real customers count, beta installs count.",
+      "accessed": "2026-10-30"
+    }
+  ],
+  "meta": {
+    "generatedBy": "seed-research",
+    "generatedAt": "2026-10-30",
+    "verification": [
+      {
+        "claim": "Unlisted apps are limited to 25 installs",
+        "method": "Fetched the HubSpot changelog post on install limits",
+        "result": "confirmed",
+        "note": "Applies to Projects-based marketplace-distribution apps since 22 Sep 2025; private distribution is 10 accounts (100 for Solution Partners)."
+      },
+      {
+        "claim": "You can choose between legacy public apps and Projects-based apps",
+        "method": "Search + legacy-public-app-creation-sunset changelog and legacy apps overview",
+        "result": "corrected",
+        "note": "Legacy public app creation disabled 26 May 2026 (new accounts) and 23 June 2026 (existing); current platform version is 2026.09, and 2025.2 must migrate by March 2027."
+      },
+      {
+        "claim": "Sandbox/test installs count toward the 3-install listing minimum (appnigma blog)",
+        "method": "Fetched the official listing requirements page",
+        "result": "corrected",
+        "note": "Official: unique production accounts unaffiliated with your organisation, active in the past 30 days."
+      },
+      {
+        "claim": "Listing review takes about 10 business days",
+        "method": "Listing requirements page and certification requirements page",
+        "result": "confirmed",
+        "note": "Initial review within 10 business days; full process up to 60 days."
+      },
+      {
+        "claim": "Certification needs 60 active installs and 6 months listed",
+        "method": "Fetched certification requirements page",
+        "result": "confirmed"
+      }
+    ]
+  }
+}

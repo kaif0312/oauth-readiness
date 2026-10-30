@@ -1,0 +1,548 @@
+{
+  "slug": "slack",
+  "app": "Slack (Slack app, OAuth v2)",
+  "website": "https://slack.com",
+  "category": "Chat",
+  "summary": "Building is easy: create an app at api.slack.com/apps (an agent can write the manifest), add bot scopes, and any workspace can install it via an 'Add to Slack' link once Manage Distribution is on, with no Marketplace review. The catch is reading history: since 29 May 2025, commercially distributed apps not approved for the Slack Marketplace get conversations.history and conversations.replies at 1 request per minute and 15 messages per call. Marketplace approval needs 10+ active workspaces first and then up to 10 weeks of review.",
+  "verdict": {
+    "difficulty": "moderate",
+    "timeToFirstToken": "15 min",
+    "timeToLaunch": "Same day (unlisted)",
+    "launchNote": "same day for posting alerts to other workspaces (unlisted distribution); roughly 3-4 months if you need Marketplace approval for full history reads (reach 10 active workspaces, then up to 10 business days preliminary + up to 10 weeks functional review).",
+    "reviewRequired": "none to distribute an unlisted app; Slack Marketplace review to lift the history rate limit, and Slack's API Terms name the Marketplace as the channel for commercial distribution",
+    "cost": "Free",
+    "costNote": "free (some AI/agent features need a paid Slack plan on the installing workspace)",
+    "evidence": {
+      "status": "sourced",
+      "sourceIds": [
+        "s6",
+        "s2",
+        "s4",
+        "s10"
+      ],
+      "note": "The 3-4 month figure is our arithmetic: time to 10 active workspaces is unknown and the review windows are Slack's stated maximums."
+    }
+  },
+  "testMode": {
+    "available": true,
+    "limits": "An app works immediately in its development workspace. Installed only there (not distributed), it counts as an internal customer-built app and keeps Tier 3 history limits (50+ requests/min, up to 1,000 objects). Free Developer Program sandboxes cover paid-only AI features.",
+    "evidence": {
+      "status": "sourced",
+      "sourceIds": [
+        "s2",
+        "s3",
+        "s10"
+      ]
+    }
+  },
+  "prerequisites": [
+    {
+      "item": "A Slack account and a development workspace (the app's home workspace)",
+      "requiredFor": "build",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s7"
+        ]
+      }
+    },
+    {
+      "item": "HTTPS OAuth redirect URL (https://app.iskaria.com/api/oauth/slack/callback). The localhost URL in the profile is http and will be rejected; use an HTTPS tunnel for local dev.",
+      "profileKey": "redirectUris",
+      "requiredFor": "build",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s1",
+          "s6"
+        ]
+      }
+    },
+    {
+      "item": "Public landing page explaining the Slack app and how to install it (Marketplace only)",
+      "profileKey": "homepageUrl",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s5"
+        ]
+      }
+    },
+    {
+      "item": "Privacy policy stating data collected, use, retention, and how to access/delete it; must also disclose LLM model, retention and data residency for AI apps (Marketplace only)",
+      "profileKey": "privacyPolicyUrl",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s5"
+        ]
+      }
+    },
+    {
+      "item": "Public support page with a contact method, no account required, replies within 2 business days (Marketplace only)",
+      "profileKey": "supportUrl",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s5"
+        ]
+      }
+    },
+    {
+      "item": "10 or more active workspaces with the app installed before Marketplace submission",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s4"
+        ]
+      }
+    },
+    {
+      "item": "App icon. MISSING: the profile has no exported square PNG (logo.square512Png is null).",
+      "profileKey": "logo",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "inferred",
+        "sourceIds": [],
+        "note": "Icon size rules not fetched this session."
+      }
+    }
+  ],
+  "steps": [
+    {
+      "title": "Have the agent write the app manifest",
+      "who": "agent",
+      "phase": "build",
+      "detail": "Generate a YAML/JSON manifest: display_information (name, description), features.bot_user, oauth_config.redirect_urls (HTTPS) and oauth_config.scopes.bot (chat:write, chat:write.public, channels:read, channels:history), settings (event subscriptions or Socket Mode, token rotation). Keep user scopes empty unless the agent must act as a person.",
+      "estimate": "5 min",
+      "fields": [
+        {
+          "label": "display_information.name",
+          "profileKey": "appName"
+        },
+        {
+          "label": "display_information.description",
+          "profileKey": "appDescription",
+          "note": "Tailor to useCases.slack: lead alerts and daily summaries."
+        },
+        {
+          "label": "oauth_config.redirect_urls",
+          "profileKey": "redirectUris",
+          "note": "HTTPS only."
+        },
+        {
+          "label": "oauth_config.scopes.bot"
+        }
+      ],
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s7"
+        ],
+        "note": "Manifest key names are from Slack's manifest reference, not re-fetched this session."
+      }
+    },
+    {
+      "title": "Create the app from the manifest",
+      "who": "you",
+      "phase": "build",
+      "detail": "api.slack.com/apps > Create New App > From a manifest > pick the development workspace > paste the manifest > Next > Create. ('From scratch' also works: name + workspace, then add scopes under OAuth & Permissions.) Fully automatable later via apps.manifest.create with an app configuration token (12-hour lifetime, rotated with tooling.tokens.rotate).",
+      "url": "https://api.slack.com/apps",
+      "estimate": "3 min",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s7"
+        ]
+      }
+    },
+    {
+      "title": "Decide bot token vs user token",
+      "who": "you",
+      "phase": "build",
+      "detail": "Use the bot token (xoxb-, from `scope`) for posting alerts and reading channels the bot is in: it survives the installing user leaving. Request user scopes (`user_scope`, xoxp- token under authed_user) only for actions a bot cannot do, such as search:read.",
+      "estimate": "2 min",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s1"
+        ]
+      }
+    },
+    {
+      "title": "Install to your workspace and post a test alert",
+      "who": "you",
+      "phase": "test",
+      "detail": "OAuth & Permissions > Install to Workspace, copy the bot token into server env, invite the bot to a channel (/invite @Iskaria) and call chat.postMessage. Posting is limited to about 1 message per second per channel.",
+      "estimate": "5 min",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s8"
+        ]
+      }
+    },
+    {
+      "title": "Implement OAuth v2 for other workspaces",
+      "who": "agent",
+      "phase": "build",
+      "detail": "Send users to https://slack.com/oauth/v2/authorize?client_id=...&scope=...&redirect_uri=...&state=...; on the callback exchange the code with oauth.v2.access using client id + secret. Store the bot token per workspace (team.id), encrypted server-side. Optionally enable token rotation (expiring access token + refresh token).",
+      "estimate": "1-2 h",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s1"
+        ]
+      }
+    },
+    {
+      "title": "Turn on distribution",
+      "who": "you",
+      "phase": "launch",
+      "detail": "Manage Distribution > Share Your App with Other Workspaces: complete the checklist (HTTPS redirect URLs, no hard-coded tokens) and click Activate Public Distribution. You get an 'Add to Slack' button and shareable install URL. Any workspace can install now, without Marketplace approval; the app is 'unlisted'.",
+      "estimate": "10 min",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s6"
+        ]
+      }
+    },
+    {
+      "title": "Design reads around the non-Marketplace limit",
+      "who": "agent",
+      "phase": "launch",
+      "detail": "As an unlisted distributed app, every new install gets conversations.history and conversations.replies at 1 request/minute, max 15 messages. Prefer Events API / Socket Mode (message.channels events) and store only what you need, instead of polling history. Posting alerts is unaffected.",
+      "estimate": "1-3 h",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s2",
+          "s5"
+        ]
+      }
+    },
+    {
+      "title": "Optional: add AI agent features",
+      "who": "agent-then-you",
+      "phase": "build",
+      "detail": "Enable the Agents feature in the app settings sidebar, add the assistant:write scope (top-nav entry point, 'agent' label) and subscribe to the assistant/agent events. Some of these features need a paid plan on the installing workspace.",
+      "estimate": "30 min",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s10"
+        ]
+      }
+    },
+    {
+      "title": "Optional: submit to the Slack Marketplace",
+      "who": "agent-then-you",
+      "phase": "launch",
+      "detail": "Once installed on 10+ active workspaces (used in the last 28 days): prepare landing page, privacy policy (incl. LLM disclosures), support page, a per-scope justification, and a test install path for reviewers (Slack cannot access your workspaces). Submit from the app's Marketplace settings. Preliminary feedback within ~10 business days; functional review up to 10 weeks (6 for resubmissions).",
+      "estimate": "1-2 days prep",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s4",
+          "s5"
+        ]
+      }
+    }
+  ],
+  "scopes": [
+    {
+      "name": "chat:write",
+      "purpose": "Post lead alerts and daily summaries as the bot in channels it is in",
+      "tier": "basic",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s8"
+        ]
+      }
+    },
+    {
+      "name": "chat:write.public",
+      "purpose": "Post to a public channel without inviting the bot first",
+      "tier": "basic",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s8"
+        ]
+      }
+    },
+    {
+      "name": "channels:read",
+      "purpose": "List channels so staff can pick where alerts go",
+      "tier": "basic",
+      "evidence": {
+        "status": "inferred",
+        "sourceIds": [],
+        "note": "Standard scope for conversations.list; not fetched this session."
+      }
+    },
+    {
+      "name": "channels:history",
+      "purpose": "Read public-channel messages the agent needs as context",
+      "tier": "sensitive",
+      "note": "*:history scopes trigger enhanced Marketplace review; outside the Marketplace the method is throttled to 1 req/min, 15 messages.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s9",
+          "s5",
+          "s2"
+        ]
+      }
+    },
+    {
+      "name": "groups:history",
+      "purpose": "Same, for private channels the bot is invited to",
+      "tier": "sensitive",
+      "note": "Skip it if alerts only go to public channels.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s9",
+          "s5"
+        ]
+      }
+    }
+  ],
+  "blockers": [
+    {
+      "title": "History reads throttled to 1/min and 15 messages for non-Marketplace apps",
+      "detail": "Since 29 May 2025, commercially distributed apps not approved for the Marketplace (new apps and new installs of existing ones) get conversations.history and conversations.replies at 1 request per minute with limit capped at 15. Marketplace apps and internal customer-built apps keep 50+ requests/minute and 1,000 objects. Iskaria installs into many clinic workspaces, so it is in the throttled class.",
+      "severity": "can-block-launch",
+      "workaround": "Use the Events API / Socket Mode to receive messages as they happen; pursue Marketplace approval if deep history reads are core.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s2",
+          "s3"
+        ]
+      }
+    },
+    {
+      "title": "API Terms: Marketplace is the channel for commercial distribution",
+      "detail": "Slack's updated API Terms (effective 29 May 2025 for new apps, 30 June 2025 for older ones) call the Marketplace the only appropriate channel for commercially distributing apps, including templated custom apps that connect to a product. Unlisted distribution still works technically, but per-clinic 'internal' apps built from your manifest to dodge the limit are explicitly in scope.",
+      "severity": "slows-you-down",
+      "workaround": "Treat unlisted distribution as a pilot; plan for Marketplace review once 10 workspaces are active.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s2",
+          "s6"
+        ]
+      }
+    },
+    {
+      "title": "Marketplace review is long and has an entry bar",
+      "detail": "Requires 10+ active workspaces before submission; preliminary review up to ~10 business days, functional review up to 10 weeks for new apps. Admin scopes are unlikely to be approved, future-use scopes are rejected, and *:history / files:read / search:read.* get enhanced review.",
+      "severity": "slows-you-down",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s4",
+          "s5"
+        ]
+      }
+    },
+    {
+      "title": "AI app rules in Marketplace guidelines",
+      "detail": "No training LLMs on Slack data; disclaimer about inaccurate outputs on the landing page and long description; disclose model, retention and data residency; no consequential decisions without human review; don't store Slack data, store metadata and fetch in real time; MCP-server-only apps are unsuitable.",
+      "severity": "slows-you-down",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s5"
+        ]
+      }
+    },
+    {
+      "title": "Redirect URL must be HTTPS",
+      "detail": "Redirect URLs must use HTTPS and cannot contain '#'; the profile's http://localhost callback will not work.",
+      "severity": "info",
+      "workaround": "Use an HTTPS tunnel or a preview deployment for local OAuth testing.",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s1"
+        ]
+      }
+    },
+    {
+      "title": "Legacy custom bots stopped working 31 March 2025",
+      "detail": "Do not build on legacy bot tokens or classic apps. Classic-app deprecation is paused, but new work should be a (granular-permission) Slack app.",
+      "severity": "info",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s11"
+        ]
+      }
+    }
+  ],
+  "agentHandoff": {
+    "agentCan": [
+      "Write the full app manifest (name, description, bot scopes, HTTPS redirect URLs, events/Socket Mode)",
+      "Implement the OAuth v2 install flow, per-workspace token storage and token rotation",
+      "Build alert posting with per-channel throttling and event-driven reading instead of history polling",
+      "Draft the Marketplace scope justifications, landing page, privacy-policy LLM section and support page"
+    ],
+    "youMust": [
+      "Log in at api.slack.com/apps and create the app (paste the manifest), or issue an app configuration token",
+      "Install to the development workspace and copy client id/secret/signing secret into server env",
+      "Activate public distribution",
+      "Get 10 clinic workspaces actively using the app before a Marketplace submission, then submit and answer reviewers",
+      "Decide whether Iskaria's use counts as commercial distribution under Slack's API Terms"
+    ]
+  },
+  "uncertainties": [
+    "Whether existing installs of unlisted apps also became throttled on 3 March 2026: community posts say so, but Slack's own changelog (as fetched 2026-10-30) still says existing installs are not affected.",
+    "Marketplace review times are Slack's stated maximums; real waits are not documented.",
+    "Slack does not define 'internal customer-built app' precisely, so whether a manifest-cloned per-clinic app keeps Tier 3 is unclear (and the Terms cover templated custom apps).",
+    "Exact Manage Distribution checklist items and app-icon size requirements were not fetched this session.",
+    "Which AI/agent features need a paid plan is not itemised in the doc fetched."
+  ],
+  "sources": [
+    {
+      "id": "s1",
+      "title": "Installing with OAuth",
+      "url": "https://docs.slack.dev/authentication/installing-with-oauth",
+      "kind": "official-docs",
+      "quote": "exchange the code for an access token",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s2",
+      "title": "Rate limit changes for non-Marketplace apps (changelog, 29 May 2025)",
+      "url": "https://docs.slack.dev/changelog/2025/05/29/rate-limit-changes-for-non-marketplace-apps",
+      "kind": "provider-policy",
+      "quote": "limited to 1 request per minute, unless they are approved for the Slack Marketplace",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s3",
+      "title": "Clarifying rate limit changes for non-Marketplace apps (changelog, 3 June 2025)",
+      "url": "https://docs.slack.dev/changelog/2025/06/03/rate-limits-clarity",
+      "kind": "provider-policy",
+      "quote": "Any internal customer-built apps will maintain their existing rate limits and will not be subject to the new posted limits.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s4",
+      "title": "Slack Marketplace review guide",
+      "url": "https://docs.slack.dev/slack-marketplace/slack-marketplace-review-guide",
+      "kind": "provider-policy",
+      "quote": "Your app has been installed on 10 or more active workspaces.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s5",
+      "title": "Slack Marketplace app guidelines and requirements",
+      "url": "https://docs.slack.dev/slack-marketplace/slack-marketplace-app-guidelines-and-requirements",
+      "kind": "provider-policy",
+      "quote": "DON'T include scopes in your submitted app intended for future functionality.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s6",
+      "title": "Distributing your app",
+      "url": "https://docs.slack.dev/distribution",
+      "kind": "official-docs",
+      "quote": "apps intended for commercial distribution should be submitted and approved for listing in the Slack Marketplace.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s7",
+      "title": "Configuring apps with app manifests",
+      "url": "https://docs.slack.dev/app-manifests/configuring-apps-with-app-manifests",
+      "kind": "official-docs",
+      "quote": "Manifests are YAML or JSON-formatted configurations bundles for Slack apps.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s8",
+      "title": "chat.postMessage method",
+      "url": "https://docs.slack.dev/reference/methods/chat.postMessage",
+      "kind": "official-docs",
+      "quote": "It will generally allow an app to post 1 message per second to a specific channel.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s9",
+      "title": "conversations.history method",
+      "url": "https://docs.slack.dev/reference/methods/conversations.history",
+      "kind": "official-docs",
+      "quote": "Tier 3: 50+ per minute",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s10",
+      "title": "Developing AI apps / agents",
+      "url": "https://docs.slack.dev/ai/developing-ai-apps",
+      "kind": "official-docs",
+      "quote": "Developing and using some AI features require a paid plan, despite being visible in the app settings on any plan.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s11",
+      "title": "Discontinuing support for legacy custom bots and classic apps (changelog)",
+      "url": "https://docs.slack.dev/changelog/2024-09-legacy-custom-bots-classic-apps-deprecation",
+      "kind": "provider-policy",
+      "quote": "Classic apps deprecation has been paused",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s12",
+      "title": "Slack Just Throttled Your OpenClaw Agent (DEV Community)",
+      "url": "https://dev.to/helen_mireille_47b02db70c/slack-just-throttled-your-openclaw-agent-you-probably-havent-noticed-yet-d4",
+      "kind": "community",
+      "quote": "That grace period ended March 3, 2026.",
+      "accessed": "2026-10-30"
+    }
+  ],
+  "meta": {
+    "generatedBy": "seed-research",
+    "generatedAt": "2026-10-30",
+    "verification": [
+      {
+        "claim": "Non-Marketplace apps get conversations.history/replies at 1 request/min and 15 objects from 29 May 2025",
+        "method": "Fetched Slack's changelog entry and the 3 June 2025 clarification",
+        "result": "confirmed",
+        "note": "Applies to commercially distributed (unlisted) apps: new apps and new installs. Internal customer-built apps keep 50+/min and 1,000 objects."
+      },
+      {
+        "claim": "Existing installs of unlisted apps were throttled from 3 March 2026",
+        "method": "Compared community posts (DEV, vendor docs) with Slack's own changelog page",
+        "result": "unverified",
+        "note": "Slack's changelog as fetched still says existing installations are not affected; the March 2026 date appears only in third-party sources."
+      },
+      {
+        "claim": "conversations.history is Tier 3",
+        "method": "Fetched the method reference",
+        "result": "corrected",
+        "note": "The reference still says Tier 3 (50+/min) and does not mention the non-Marketplace Tier 1 limit, so the reference page alone misleads agents that read history."
+      },
+      {
+        "claim": "Classic apps are being shut down",
+        "method": "Fetched the 2024 deprecation changelog",
+        "result": "corrected",
+        "note": "Legacy custom bots stopped 31 March 2025, but the classic-app shutdown (rescheduled several times through November 2026) is now paused."
+      },
+      {
+        "claim": "Marketplace review takes weeks",
+        "method": "Fetched the Marketplace review guide",
+        "result": "confirmed",
+        "note": "Up to 10 business days preliminary, up to 10 weeks functional (6 for resubmissions); 10 active workspaces required first."
+      }
+    ]
+  }
+}

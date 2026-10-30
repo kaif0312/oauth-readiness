@@ -1,0 +1,36 @@
+// Validate guide JSON files against the schema.
+// Usage: node scripts/validate.ts [file...]   (default: every file in src/data/guides)
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+import { Guide } from "../src/lib/guide.ts";
+
+const dir = "src/data/guides";
+const files = process.argv.slice(2).length
+  ? process.argv.slice(2)
+  : readdirSync(dir).filter((f) => f.endsWith(".json")).map((f) => join(dir, f));
+
+let failed = 0;
+for (const file of files) {
+  const data = JSON.parse(readFileSync(file, "utf8"));
+  const res = Guide.safeParse(data);
+  if (!res.success) {
+    failed++;
+    console.log(`FAIL ${file}`);
+    for (const issue of res.error.issues.slice(0, 20)) console.log(`  ${issue.path.join(".")}: ${issue.message}`);
+    continue;
+  }
+  // Every cited source id must exist.
+  const ids = new Set(res.data.sources.map((s) => s.id));
+  const missing = new Set<string>();
+  JSON.stringify(res.data, (k, v) => {
+    if (k === "sourceIds") for (const id of v as string[]) if (!ids.has(id)) missing.add(id);
+    return v;
+  });
+  if (missing.size) {
+    failed++;
+    console.log(`FAIL ${file}: unknown source ids ${[...missing].join(", ")}`);
+    continue;
+  }
+  console.log(`ok   ${file} (${res.data.steps.length} steps, ${res.data.sources.length} sources)`);
+}
+process.exit(failed ? 1 : 0);

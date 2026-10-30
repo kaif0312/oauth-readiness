@@ -1,0 +1,604 @@
+{
+  "slug": "google-search-analytics",
+  "app": "Google (Search Console, GA4, Business Profile)",
+  "website": "https://developers.google.com/webmaster-tools",
+  "category": "Marketing analytics",
+  "summary": "Moderate. You can be reading your own Search Console and GA4 data within about 30 minutes in Testing mode. Clinic accounts need sensitive-scope verification first: free, about 1-3 weeks, with no CASA. Business Profile is a separate gate: its APIs return nothing (0 requests/minute quota) until Google approves a separate API access request. Request it first. The current catches are 7-day test tokens, gcloud's built-in client being blocked, and a 2026 classification bug for business.manage.",
+  "verdict": {
+    "difficulty": "moderate",
+    "timeToFirstToken": "30 min",
+    "timeToLaunch": "1-3 weeks",
+    "launchNote": "1-3 weeks for Search Console + GA4. Business Profile adds an access request that takes days to weeks; run it in parallel.",
+    "reviewRequired": "Brand verification (about 2-3 business days), then sensitive-scope verification (up to about 10 days) for webmasters.readonly and analytics.readonly. Business Profile also needs Google's separate API access approval. No security assessment.",
+    "cost": "Free",
+    "evidence": {
+      "status": "sourced",
+      "sourceIds": [
+        "s3",
+        "s4",
+        "s7"
+      ],
+      "note": "The sensitive tier for these scopes is inferred from community docs and from the unverified-app warning Iskaria saw. Google does not publish a per-scope list for them."
+    }
+  },
+  "testMode": {
+    "available": true,
+    "limits": "Up to 100 listed test users. Each sees the unverified-app screen (Advanced > Go to <app> (unsafe)). Refresh tokens expire after 7 days, so you log in again weekly. Business Profile calls fail even in Testing until the API access request is approved.",
+    "evidence": {
+      "status": "tested",
+      "sourceIds": [
+        "s1",
+        "s2",
+        "s5",
+        "s7"
+      ]
+    }
+  },
+  "prerequisites": [
+    {
+      "item": "Your own Google Cloud project and your own OAuth client. gcloud's built-in client is blocked for these scopes.",
+      "requiredFor": "build",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "s1"
+        ]
+      }
+    },
+    {
+      "item": "Search Console API, Google Analytics Data API (plus the Admin API if you list properties), and the Business Profile APIs (My Business Account Management, Business Information, etc.) enabled on the project",
+      "requiredFor": "build",
+      "evidence": {
+        "status": "inferred",
+        "sourceIds": [
+          "s9"
+        ],
+        "note": "API names come from Google's API library and Unified.to's guide"
+      }
+    },
+    {
+      "item": "Approved Business Profile API access (Application for Basic API Access form). Eligibility: a Business Profile verified and active for 60+ days, with a website.",
+      "requiredFor": "build",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "s7",
+          "s1"
+        ]
+      }
+    },
+    {
+      "item": "A homepage and privacy policy on a Search Console-verified domain. The policy must describe the Google user data you use. Iskaria's /privacy has no such section yet (checked 2026-10-30).",
+      "profileKey": "privacyPolicyUrl",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "s3",
+          "s1"
+        ]
+      }
+    },
+    {
+      "item": "Domain ownership verified in Search Console by an account that is Owner or Editor on the Cloud project",
+      "profileKey": "domainVerified.googleSearchConsole",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s3"
+        ]
+      }
+    },
+    {
+      "item": "A demo video uploaded to YouTube as Unlisted. Iskaria has none yet.",
+      "profileKey": "demoVideoUrl",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s4"
+        ]
+      }
+    },
+    {
+      "item": "A support email that gets read. Iskaria has no shared support mailbox yet.",
+      "profileKey": "supportEmail",
+      "requiredFor": "launch",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "s1",
+          "s3"
+        ]
+      }
+    }
+  ],
+  "steps": [
+    {
+      "title": "Request Business Profile API access first",
+      "who": "you",
+      "phase": "build",
+      "detail": "Submit Google's Business Profile API contact form and choose 'Application for Basic API Access'. Use the Cloud project number and an email that manages a verified profile. This is separate from OAuth verification. Until it is approved, the Business Profile APIs have a quota of 0 QPM. Approved projects show 300 QPM under IAM & Admin > Quotas.",
+      "url": "https://developers.google.com/my-business/content/prereqs",
+      "estimate": "15 min, then days to weeks of waiting",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "s1",
+          "s7"
+        ]
+      }
+    },
+    {
+      "title": "Create the project and enable the APIs",
+      "who": "agent-then-you",
+      "phase": "build",
+      "detail": "Enable the Google Search Console API, the Google Analytics Data API and the Admin API, and the Business Profile APIs. An agent with an authenticated gcloud can run `gcloud services enable searchconsole.googleapis.com analyticsdata.googleapis.com analyticsadmin.googleapis.com mybusinessaccountmanagement.googleapis.com mybusinessbusinessinformation.googleapis.com`.",
+      "url": "https://console.cloud.google.com/apis/library",
+      "estimate": "5 min",
+      "evidence": {
+        "status": "inferred",
+        "sourceIds": [
+          "s9"
+        ],
+        "note": "Iskaria enabled these APIs on 2026-10-19. Confirm the service names in the API library."
+      }
+    },
+    {
+      "title": "Fill in Branding in Google Auth Platform",
+      "who": "agent-then-you",
+      "phase": "build",
+      "detail": "In Cloud Console, open Menu > Google Auth Platform > Branding, the old 'OAuth consent screen'. Enter the app name (matching the homepage), support email, logo, homepage, privacy policy, terms, authorized domains and developer contact.",
+      "url": "https://console.cloud.google.com/auth/branding",
+      "estimate": "10 min",
+      "fields": [
+        {
+          "label": "App name",
+          "profileKey": "appName"
+        },
+        {
+          "label": "User support email",
+          "profileKey": "supportEmail"
+        },
+        {
+          "label": "App logo",
+          "profileKey": "logo.square512Png",
+          "note": "Missing: no exported square PNG yet"
+        },
+        {
+          "label": "Application home page",
+          "profileKey": "homepageUrl"
+        },
+        {
+          "label": "Application privacy policy link",
+          "profileKey": "privacyPolicyUrl"
+        },
+        {
+          "label": "Application terms of service link",
+          "profileKey": "termsUrl"
+        },
+        {
+          "label": "Authorized domains",
+          "profileKey": "authorizedDomains"
+        },
+        {
+          "label": "Developer contact information",
+          "profileKey": "developerContactEmail"
+        }
+      ],
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "s1",
+          "s6"
+        ]
+      }
+    },
+    {
+      "title": "Audience: External, Testing, test users",
+      "who": "you",
+      "phase": "build",
+      "detail": "Under Audience, choose External and leave the publishing status as Testing. Add yourself and the pilot clinic accounts under Test users (100 at most).",
+      "url": "https://console.cloud.google.com/auth/audience",
+      "estimate": "3 min",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "s1",
+          "s5"
+        ]
+      }
+    },
+    {
+      "title": "Declare the scopes under Data Access",
+      "who": "agent-then-you",
+      "phase": "build",
+      "detail": "Add webmasters.readonly, analytics.readonly and business.manage (plus openid/email if you identify the user). Read the tier the console shows next to each scope. In 2026, several developers saw business.manage listed as non-sensitive while the consent screen still blocked external users.",
+      "url": "https://console.cloud.google.com/auth/scopes",
+      "estimate": "5 min",
+      "evidence": {
+        "status": "inferred",
+        "sourceIds": [
+          "s8",
+          "s9",
+          "s10"
+        ]
+      }
+    },
+    {
+      "title": "Create your own OAuth client",
+      "who": "agent-then-you",
+      "phase": "build",
+      "detail": "Under Clients, create a 'Web application' client for the console (redirect URIs below). A 'Desktop' client is fine for local scripts that use a loopback redirect. Do not rely on gcloud's built-in client (`gcloud auth application-default login`): Google shows 'This app is blocked' for these scopes.",
+      "url": "https://console.cloud.google.com/auth/clients",
+      "estimate": "5 min",
+      "fields": [
+        {
+          "label": "Authorized redirect URIs",
+          "profileKey": "redirectUris",
+          "note": "Replace {provider} with e.g. google"
+        }
+      ],
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "s1"
+        ]
+      }
+    },
+    {
+      "title": "Log in as a test user and pull data",
+      "who": "agent-then-you",
+      "phase": "test",
+      "detail": "Run the flow with access_type=offline. At the warning, click Advanced > Go to <app> (unsafe). Call the Search Console searchAnalytics.query and GA4 runReport. If you get 403 on a `sc-domain:` property, the account is only siteUnverifiedUser: have the owner grant it Full or Owner. Search Console only holds data from the day the property was added. Plan to log in again every 7 days while in Testing.",
+      "estimate": "20 min",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "s1",
+          "s2"
+        ]
+      }
+    },
+    {
+      "title": "Add a Google user data section to the privacy policy",
+      "who": "agent-then-you",
+      "phase": "launch",
+      "detail": "On iskaria.com/privacy, list the Google data read (Search Console performance, GA4 reports, Business Profile locations and reviews), why it is read, how it is stored, that it is not sold or used for ads, and how to revoke access. Add a statement that use of the data adheres to the Google API Services User Data Policy, including the Limited Use requirements.",
+      "url": "https://developers.google.com/terms/api-services-user-data-policy",
+      "estimate": "1 h",
+      "fields": [
+        {
+          "label": "Privacy policy URL",
+          "profileKey": "privacyPolicyUrl",
+          "note": "No Google section yet (checked 2026-10-30)"
+        }
+      ],
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s3",
+          "s11"
+        ]
+      }
+    },
+    {
+      "title": "Record the demo video",
+      "who": "you",
+      "phase": "launch",
+      "detail": "Record the English consent screen, the client ID visible in the address bar, and each scope in use: a Search Console chart, a GA4 report and a Business Profile view. Upload it to YouTube as Unlisted.",
+      "estimate": "1 h",
+      "fields": [
+        {
+          "label": "YouTube link",
+          "profileKey": "demoVideoUrl",
+          "note": "Missing"
+        }
+      ],
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s4"
+        ]
+      }
+    },
+    {
+      "title": "Publish and submit for verification",
+      "who": "you",
+      "phase": "launch",
+      "detail": "Under Audience, click Publish app, then submit in Verification Center: brand verification first, then sensitive scopes. Justify each scope against a visible feature. Answer reviewer emails quickly.",
+      "url": "https://console.cloud.google.com/auth/verification",
+      "estimate": "30 min, then up to about 2 weeks of waiting",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s3",
+          "s4"
+        ]
+      }
+    }
+  ],
+  "scopes": [
+    {
+      "name": "https://www.googleapis.com/auth/webmasters.readonly",
+      "purpose": "Read Search Console performance (queries, pages, clicks) for the clinic's site",
+      "tier": "sensitive",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "s1",
+          "s12"
+        ],
+        "note": "Iskaria got the unverified-app warning with this scope. That warning appears only for sensitive or restricted scopes. Not restricted: Google's restricted lists cover Gmail, Drive, Fit, Chat and similar."
+      }
+    },
+    {
+      "name": "https://www.googleapis.com/auth/analytics.readonly",
+      "purpose": "Run GA4 reports (sessions, conversions, sources) for the clinic's property",
+      "tier": "sensitive",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "s1",
+          "s9",
+          "s12"
+        ]
+      }
+    },
+    {
+      "name": "https://www.googleapis.com/auth/business.manage",
+      "purpose": "Read the clinic's Business Profile locations, reviews and performance, and reply to reviews",
+      "tier": "sensitive",
+      "note": "Classification is unclear. Unified.to calls it sensitive. A 2026 Google forum thread reports the console listing it as non-sensitive while external users are still blocked with 403 access_denied. Check your own Data Access page.",
+      "evidence": {
+        "status": "inferred",
+        "sourceIds": [
+          "s8",
+          "s10"
+        ]
+      }
+    },
+    {
+      "name": "openid email",
+      "purpose": "Identify which Google account connected",
+      "tier": "basic",
+      "evidence": {
+        "status": "sourced",
+        "sourceIds": [
+          "s2"
+        ]
+      }
+    }
+  ],
+  "blockers": [
+    {
+      "title": "Business Profile APIs return nothing until access is approved",
+      "detail": "This is separate from OAuth verification. Until Google approves the 'Application for Basic API Access', the Business Profile API quota is 0 QPM and calls fail with 429. You must manage a profile that is verified and active for 60+ days and has a website.",
+      "severity": "can-block-launch",
+      "workaround": "Submit the form on day one. Ship Search Console and GA4 first, and put Business Profile behind a flag.",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "s1",
+          "s7",
+          "s9"
+        ]
+      }
+    },
+    {
+      "title": "gcloud's built-in OAuth client is blocked",
+      "detail": "Requesting Analytics or Search Console scopes through gcloud's own client shows 'This app is blocked'. You must create and use your own OAuth client.",
+      "severity": "slows-you-down",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "s1"
+        ]
+      }
+    },
+    {
+      "title": "7-day refresh tokens in Testing",
+      "detail": "Every connected account has to log in again weekly until the app is In production. Clinic staff will notice broken reports.",
+      "severity": "slows-you-down",
+      "workaround": "Submit for verification as soon as the policy and video are ready",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "s1",
+          "s2"
+        ]
+      }
+    },
+    {
+      "title": "business.manage scope classification bug (2026)",
+      "detail": "Several developers report that the console lists business.manage as non-sensitive, so Verification Center offers nothing to submit, yet external users get 'Access blocked... has not completed the Google verification process'. No Google resolution has been posted (thread still open in October 2026).",
+      "severity": "can-block-launch",
+      "workaround": "Keep business.manage clients on the test-user list while you escalate through Google Cloud support. If you can, request business.manage alongside a sensitive scope so a verification submission exists.",
+      "evidence": {
+        "status": "inferred",
+        "sourceIds": [
+          "s10"
+        ]
+      }
+    },
+    {
+      "title": "Search Console: sc-domain 403 and no backfill",
+      "detail": "A `sc-domain:` property returns 403 to an account that is only siteUnverifiedUser. Data exists only from the day the property was added, so a newly added clinic has no history.",
+      "severity": "info",
+      "workaround": "Have the clinic's owner grant Full user or Owner, and add the property as early as possible",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "s1"
+        ]
+      }
+    },
+    {
+      "title": "Privacy policy and demo video missing",
+      "detail": "Verification checks the policy's Google user data disclosure and needs an Unlisted YouTube demo. Iskaria has neither yet.",
+      "severity": "can-block-launch",
+      "evidence": {
+        "status": "tested",
+        "sourceIds": [
+          "s1",
+          "s3",
+          "s4"
+        ]
+      }
+    }
+  ],
+  "agentHandoff": {
+    "agentCan": [
+      "Enable the APIs and fill the Branding fields from the profile",
+      "Build the OAuth web flow, token storage and weekly test re-login",
+      "Check the Business Profile quota (0 vs 300 QPM) to know when access is approved",
+      "Draft the privacy-policy section and the demo-video script",
+      "Diagnose Search Console 403s (permission level, sc-domain vs URL-prefix)"
+    ],
+    "youMust": [
+      "Submit the Business Profile API access form as the profile manager",
+      "Sign in to Cloud Console, add test users and click through the unsafe warning",
+      "Approve and publish the privacy-policy change",
+      "Record and upload the demo video",
+      "Publish the app, submit for verification and answer reviewer emails"
+    ]
+  },
+  "uncertainties": [
+    "Google publishes no per-scope sensitivity list for webmasters.readonly and analytics.readonly. 'Sensitive' is inferred from the unverified-app warning Iskaria saw and from community docs.",
+    "business.manage: sources conflict (sensitive per Unified.to; non-sensitive in some consoles in 2026, with external users still blocked). The fix path is unknown.",
+    "Business Profile access approval time: Google gives no figure, only 'A follow-up email will be sent'. Community reports range from several days to a few weeks.",
+    "Sensitive review duration: Google says up to 10 days, but follow-up rounds can stretch it. Our estimate is anecdotal beyond that."
+  ],
+  "sources": [
+    {
+      "id": "s1",
+      "title": "Iskaria's own setup, 2026-10-19",
+      "url": "https://iskaria.com/",
+      "kind": "our-test",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s2",
+      "title": "Using OAuth 2.0 to Access Google APIs",
+      "url": "https://developers.google.com/identity/protocols/oauth2",
+      "kind": "official-docs",
+      "quote": "a publishing status of \"Testing\" is issued a refresh token expiring in 7 days",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s3",
+      "title": "Restricted scope verification (brand verification and privacy policy requirements)",
+      "url": "https://developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification",
+      "kind": "official-docs",
+      "quote": "Verify ownership of your project's authorized domains within the Google Search Console.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s4",
+      "title": "Sensitive scope verification",
+      "url": "https://developers.google.com/identity/protocols/oauth2/production-readiness/sensitive-scope-verification",
+      "kind": "official-docs",
+      "quote": "The sensitive scope verification process can take up to 10 days to complete.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s5",
+      "title": "Manage App Audience (Google Cloud Help)",
+      "url": "https://support.google.com/cloud/answer/15549945",
+      "kind": "official-docs",
+      "quote": "limited to up to 100 test users listed in the OAuth consent screen",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s6",
+      "title": "Configure the OAuth consent screen (Google Workspace)",
+      "url": "https://developers.google.com/workspace/guides/configure-oauth-consent",
+      "kind": "official-docs",
+      "quote": "Google Auth platform",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s7",
+      "title": "Business Profile APIs: Prerequisites",
+      "url": "https://developers.google.com/my-business/content/prereqs",
+      "kind": "official-docs",
+      "quote": "If your quota is 0 QPM (Queries Per Minute), your project has not yet been approved.",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s8",
+      "title": "Unified.to: How to set up Google Business Profile API access",
+      "url": "https://docs.unified.to/guides/how_to_set_up_google_business_profile_api_access_and_get_oauth_2_credentials",
+      "kind": "community",
+      "quote": "which Google classifies as `Sensitive`",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s9",
+      "title": "Dango: OAuth troubleshooting",
+      "url": "https://docs.getdango.dev/guides/oauth-troubleshooting/",
+      "kind": "community",
+      "quote": "is a Google-classified Sensitive scope",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s10",
+      "title": "Google Developer forums: business.manage shown as non-sensitive but backend blocks external users",
+      "url": "https://discuss.google.dev/t/oauth-business-manage-shown-as-non-sensitive-in-auth-platform-but-backend-blocks-all-external-users-with-error-403-access-denied-no-submit-for-verification-path-exists/384175",
+      "kind": "community",
+      "quote": "listed under “non-sensitive scopes”",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s11",
+      "title": "Google API Services User Data Policy",
+      "url": "https://developers.google.com/terms/api-services-user-data-policy",
+      "kind": "provider-policy",
+      "quote": "All other transfers, uses, or sales of user data are prohibited",
+      "accessed": "2026-10-30"
+    },
+    {
+      "id": "s12",
+      "title": "Unverified apps (Google Cloud Help)",
+      "url": "https://support.google.com/cloud/answer/7454865",
+      "kind": "official-docs",
+      "quote": "The app or script might display an \"unverified app\" screen before it displays the consent screen.",
+      "accessed": "2026-10-30"
+    }
+  ],
+  "meta": {
+    "generatedBy": "seed-research",
+    "generatedAt": "2026-10-30",
+    "verification": [
+      {
+        "claim": "Business Profile APIs need a separate access request. Quota is 0 QPM until approved, 300 QPM after.",
+        "method": "Fetched Google's Business Profile prerequisites page (s7), cross-checked with Unified.to (s8) and Iskaria's own experience (s1)",
+        "result": "confirmed"
+      },
+      {
+        "claim": "business.manage is a sensitive scope",
+        "method": "Unified.to (s8) vs the Google developer forum thread, 2026-07 to 2026-10 (s10)",
+        "result": "unverified",
+        "note": "Some 2026 consoles list it as non-sensitive while still blocking external users"
+      },
+      {
+        "claim": "Testing-mode refresh tokens expire after 7 days",
+        "method": "OAuth 2.0 overview (s2) plus Iskaria's weekly re-logins (s1)",
+        "result": "confirmed"
+      },
+      {
+        "claim": "Common claim: sensitive-scope review takes 3-5 business days",
+        "method": "Google's sensitive-scope verification page (s4)",
+        "result": "corrected",
+        "note": "Google now says up to 10 days, after 2-3 business days of brand verification"
+      },
+      {
+        "claim": "Consent screen is configured under 'APIs & Services > OAuth consent screen'",
+        "method": "Workspace guide (s6) and Iskaria's console session (s1)",
+        "result": "corrected",
+        "note": "It is now Google Auth Platform > Branding / Audience / Data Access / Clients"
+      }
+    ]
+  }
+}
