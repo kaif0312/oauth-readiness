@@ -40,28 +40,29 @@ Assignment brief and scope: the first message of the original session; deliverab
 | `src/lib/agent.ts` | live agent: research (Opus 5.5, web_search/web_fetch server tools + local `probe_oauth`, 140 s budget, forced wrap-up) then compose (streamed JSON, zod-validated, one repair round) |
 | `src/lib/probe.ts` | credential-free endpoint probe: RFC 8414 / OIDC discovery, PKCE, dynamic client registration, authorize error shape |
 | `src/lib/plan.ts` | `buildPlan()`: guide -> setup plan for a browser agent; `BROWSER_RULES` (never type secrets, stop at STOP steps, reload and read back after every save) |
-| `src/lib/store.ts` | seeds from disk; live guides in Vercel Blob (`guides/<slug>.json`), `.data/guides` locally; `takeGenerationSlot` daily cap (`DAILY_GENERATION_LIMIT`, default 40) |
+| `src/lib/r2.ts` | R2 client: S3 API with SigV4 via node:crypto, no SDK (`r2Get` null on 404, `r2Put`, `r2List` first 1000 keys) |
+| `src/lib/store.ts` | seeds from disk; live guides in R2 (`guides/<slug>.json`), `.data/guides` locally; `takeGenerationSlot` daily cap (`DAILY_GENERATION_LIMIT`, default 40) |
 | `src/app/api/generate/route.ts` | SSE stream of agent events, `maxDuration` 300 |
 | `src/app/api/mcp/route.ts` | MCP server |
-| `scripts/` | `validate.ts`, `probe.ts`, `setup-github.ts`, `push-live.ts` (push a local `.data` guide to Blob). Run with `node` (type stripping) |
+| `scripts/` | `validate.ts`, `probe.ts`, `setup-github.ts`, `push-live.ts` (push a local `.data` guide to R2, reads it back). Run with `node` (type stripping) |
 
 Env (`.env.example`): `ANTHROPIC_API_KEY` (Vercel has it, unquoted; `.env.local` has it quoted, the code strips quotes),
-`BLOB_READ_WRITE_TOKEN`, `DAILY_GENERATION_LIMIT`, `NTFY_TOPIC` / `NOTIFY_WEBHOOK` (setup-agent handoff pings).
+`R2_ENDPOINT` / `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` / `R2_BUCKET`, `DAILY_GENERATION_LIMIT`, `NTFY_TOPIC` / `NOTIFY_WEBHOOK` (setup-agent handoff pings).
 Secrets never in git: `.secrets/`, `.auth/`, `.data/`, `.env*` are git-ignored AND in `.vercelignore` (a locked Chrome profile
 in `.auth/` once made every CLI deploy fail silently with EBUSY).
 
 ## State and open problems (in priority order)
 
-1. **BROKEN: live guides are unreadable.** The Vercel Blob store `oauth-readiness-guides` returns 403 "Your store is
-   blocked" (the account's free Blob allowance; another agent saw "Blob suspended" for the Sign module the same day). The
-   files (calendly, notion, zoom) still list, but cannot be read or written, so `/guides/notion` 404s and new live runs fail at
-   Save. Unblocking costs money; the owner does not want to pay. Free options, owner to pick: (a) save live guides to this
-   GitHub repo through the contents API with a fine-grained token limited to this repo (free, reviewable as PRs/commits);
-   (b) Upstash Redis free tier via the Vercel Marketplace (it was deleted once out of a cost worry; the free tier is free);
-   (c) Cloudflare R2 (another agent is setting it up for Iskaria, needs Cloudflare sign-in). Local copies exist only for
-   calendly and xero (`.data/guides`).
+1. **Live guides moved to Cloudflare R2 (2026-10-30).** Vercel Blob (Hobby) blocked the store over quota (every read 403),
+   so live guides now go to the PRIVATE R2 bucket `oauth-readiness-guides` (Cloudflare login iskaria.team@gmail.com,
+   "Iskaria.team@gmail.com's Account"; the bucket sits next to Iskaria's `iskaria-sign`). Token "oauth-readiness-guides RW":
+   Object Read & Write on that bucket only, no expiry. Env `R2_*` set in Vercel Production + Preview and `.env.local`.
+   calendly and xero were re-pushed from `.data/guides`; **notion and zoom are lost** unless the Blob store is unblocked
+   (`BLOB_READ_WRITE_TOKEN` is kept in Vercel for that reason only, the code no longer reads it): regenerate them instead.
+   Cloudflare's dashboard API answers reads with the session cookie but its firewall 403s scripted writes; use the UI.
+   The secret was moved via the page's "Click to copy" + `Get-Clipboard` into `.env.local`, never printed.
 2. **Xero live guide contradicts itself** (summary says 5 connections, verification says 25). The compose prompt now forbids
-   that; regenerate xero, then push with `node --env-file=.env.local scripts/push-live.ts xero` (once storage works).
+   that; regenerate xero, then push with `node --env-file=.env.local scripts/push-live.ts xero`.
 3. 8 guides, not 100. The scale path: batch `research_app` runs + a human review queue; seeds were researched by parallel
    agents following `docs/research-brief.md`, then checked by a separate verifier.
 4. Save the Google console flow to the browser-flows library (`~/.claude/scripts/browser-flows/`, see the `browser-fast`

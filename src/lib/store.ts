@@ -1,15 +1,15 @@
 import { readFileSync, readdirSync, mkdirSync, writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { put, list, head } from "@vercel/blob";
+import { r2Configured, r2Get, r2List, r2Put } from "./r2";
 import { Guide } from "./guide";
 
-// Seeded guides ship in the repo (src/data/guides). Live-generated guides go to Vercel Blob
-// (one public JSON file per guide) when BLOB_READ_WRITE_TOKEN is set, else to .data/guides (local dev).
+// Seeded guides ship in the repo (src/data/guides). Live-generated guides go to Cloudflare R2 (one JSON file per guide
+// in a private bucket, see ./r2.ts) when the R2_* env is set, else to .data/guides (local dev).
 
 const SEED_DIR = join(process.cwd(), "src/data/guides");
 const LOCAL_DIR = join(process.cwd(), ".data/guides");
-const useBlob = !!process.env.BLOB_READ_WRITE_TOKEN;
-const blobPath = (slug: string) => `guides/${slug}.json`;
+const useR2 = r2Configured();
+const objectKey = (slug: string) => `guides/${slug}.json`;
 
 function readDir(dir: string): Guide[] {
   if (!existsSync(dir)) return [];
@@ -21,10 +21,10 @@ function readDir(dir: string): Guide[] {
     });
 }
 
-async function fetchGuide(url: string): Promise<Guide | null> {
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) return null;
-  const parsed = Guide.safeParse(await res.json());
+async function fetchGuide(key: string): Promise<Guide | null> {
+  const body = await r2Get(key);
+  if (!body) return null;
+  const parsed = Guide.safeParse(JSON.parse(body));
   return parsed.success ? parsed.data : null;
 }
 
@@ -33,49 +33,37 @@ export function seedGuides(): Guide[] {
 }
 
 export async function liveGuides(): Promise<Guide[]> {
-  if (!useBlob) return readDir(LOCAL_DIR);
-  const { blobs } = await list({ prefix: "guides/", limit: 100 });
-  const newest = blobs.sort((a, b) => +b.uploadedAt - +a.uploadedAt).slice(0, 30);
-  const guides = await Promise.all(newest.map((b) => fetchGuide(b.url)));
+  if (!useR2) return readDir(LOCAL_DIR);
+  const objects = await r2List("guides/");
+  const newest = objects.sort((a, b) => +b.lastModified - +a.lastModified).slice(0, 30);
+  const guides = await Promise.all(newest.map((o) => fetchGuide(o.key)));
   return guides.filter((g): g is Guide => !!g);
 }
 
 export async function getGuide(slug: string): Promise<Guide | null> {
   const seed = seedGuides().find((g) => g.slug === slug);
   if (seed) return seed;
-  if (useBlob) {
-    const meta = await head(blobPath(slug)).catch(() => null);
-    return meta ? fetchGuide(meta.url) : null;
-  }
+  if (useR2) return fetchGuide(objectKey(slug));
   const file = join(LOCAL_DIR, `${slug}.json`);
   return existsSync(file) ? Guide.parse(JSON.parse(readFileSync(file, "utf8"))) : null;
 }
 
 export async function saveGuide(guide: Guide): Promise<void> {
   const body = JSON.stringify(guide, null, 2);
-  if (useBlob) {
-    await put(blobPath(guide.slug), body, {
-      access: "public",
-      contentType: "application/json",
-      addRandomSuffix: false,
-      allowOverwrite: true,
-      cacheControlMaxAge: 60,
-    });
-    return;
-  }
+  if (useR2) return r2Put(objectKey(guide.slug), body);
   mkdirSync(LOCAL_DIR, { recursive: true });
   writeFileSync(join(LOCAL_DIR, `${guide.slug}.json`), body, "utf8");
 }
 
-// Spend guard for the public generator: at most `limit` live runs per UTC day. A counter file in Blob;
+// Spend guard for the public generator: at most `limit` live runs per UTC day. A counter file in R2;
 // not atomic, so two runs at the same instant can both pass, which is fine for a cost cap.
 export async function takeGenerationSlot(limit = Number(process.env.DAILY_GENERATION_LIMIT ?? 40)): Promise<boolean> {
-  if (!useBlob) return true;
-  const path = `meta/generations-${new Date().toISOString().slice(0, 10)}.json`;
-  const meta = await head(path).catch(() => null);
-  const count = meta ? ((await (await fetch(meta.url, { cache: "no-store" })).json()) as { count: number }).count : 0;
+  if (!useR2) return true;
+  const key = `meta/generations-${new Date().toISOString().slice(0, 10)}.json`;
+  const stored = await r2Get(key);
+  const count = stored ? (JSON.parse(stored) as { count: number }).count : 0;
   if (count >= limit) return false;
-  await put(path, JSON.stringify({ count: count + 1 }), { access: "public", contentType: "application/json", addRandomSuffix: false, allowOverwrite: true, cacheControlMaxAge: 60 });
+  await r2Put(key, JSON.stringify({ count: count + 1 }));
   return true;
 }
 

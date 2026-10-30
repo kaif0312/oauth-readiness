@@ -48,7 +48,7 @@ two numbers: **first token** (hands-on time to your own working connection) and 
    second page and writes a dossier.
 2. **Compose**: a second call with structured outputs constrained to the zod `Guide` schema (`src/lib/guide.ts`). It only uses facts and URLs
    from the dossier; dangling source ids are dropped.
-3. **Save**: one public JSON file per guide in Vercel Blob in production, `.data/` locally. Seeded guides live in the repo.
+3. **Save**: one JSON file per guide in a private Cloudflare R2 bucket in production (free tier; Vercel Blob's free plan blocked the store at quota), `.data/` locally. Seeded guides live in the repo.
 
 The seeded guides were written the same way, by parallel research agents following `docs/research-brief.md`, then checked by a separate
 verifier agent that was given the guides but not my conclusions.
@@ -103,7 +103,7 @@ verifier agent that was given the guides but not my conclusions.
 
 ```sh
 npm install
-cp .env.example .env.local      # add ANTHROPIC_API_KEY (BLOB_READ_WRITE_TOKEN comes from `vercel env pull`)
+cp .env.example .env.local      # add ANTHROPIC_API_KEY (the R2_* storage env comes from `vercel env pull`)
 npm run dev                     # http://localhost:3000
 node scripts/validate.ts        # check all guides against the schema
 node scripts/probe.ts accounts.google.com --authorize https://accounts.google.com/o/oauth2/v2/auth
@@ -111,7 +111,7 @@ node scripts/setup-github.ts --dry-run   # print the GitHub App manifest built f
 node scripts/setup-github.ts             # real run: opens Chrome, you sign in and click Create
 ```
 
-Deploy: Vercel (Next.js preset). Set `ANTHROPIC_API_KEY`; create a Blob store (`vercel blob create-store <name> --access public`, which sets `BLOB_READ_WRITE_TOKEN`); optionally
+Deploy: Vercel (Next.js preset). Set `ANTHROPIC_API_KEY`; create a private R2 bucket and an R2 API token with Object Read & Write on it, and set `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`; optionally
 `DAILY_GENERATION_LIMIT` (default 40 live runs/day). The generate route needs up to 300 s (`maxDuration`).
 
 ## Limitations

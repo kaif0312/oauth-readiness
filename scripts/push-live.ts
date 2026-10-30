@@ -1,19 +1,15 @@
-// Copy locally generated guides (.data/guides) into the production Blob store.
-// Usage (BLOB_READ_WRITE_TOKEN comes from `vercel env pull`, already in .env.local):
+// Copy locally generated guides (.data/guides) into the production R2 bucket.
+// Usage (the R2_* env is in .env.local, or `vercel env pull`):
 //   node --env-file=.env.local scripts/push-live.ts calendly [slug...]
 import { readFileSync } from "node:fs";
-import { put } from "@vercel/blob";
+import { r2Configured, r2Get, r2Put } from "../src/lib/r2.ts";
 import { Guide } from "../src/lib/guide.ts";
 
-if (!process.env.BLOB_READ_WRITE_TOKEN) throw new Error("BLOB_READ_WRITE_TOKEN missing");
+if (!r2Configured()) throw new Error("R2_ENDPOINT / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY / R2_BUCKET missing");
 for (const slug of process.argv.slice(2)) {
   const guide = Guide.parse(JSON.parse(readFileSync(`.data/guides/${slug}.json`, "utf8")));
-  const { url } = await put(`guides/${slug}.json`, JSON.stringify(guide, null, 2), {
-    access: "public",
-    contentType: "application/json",
-    addRandomSuffix: false,
-    allowOverwrite: true,
-    cacheControlMaxAge: 60,
-  });
-  console.log(`pushed ${slug} -> ${url}`);
+  const body = JSON.stringify(guide, null, 2);
+  await r2Put(`guides/${slug}.json`, body);
+  const back = await r2Get(`guides/${slug}.json`);
+  console.log(`pushed ${slug} (${body.length} bytes, read back ${back === body ? "OK" : "MISMATCH"})`);
 }
