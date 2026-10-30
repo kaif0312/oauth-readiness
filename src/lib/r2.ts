@@ -58,7 +58,10 @@ async function fail(what: string, res: Response): Promise<never> {
 
 export async function r2Get(key: string): Promise<string | null> {
   const res = await request("GET", key);
-  if (res.status === 404) return null;
+  if (res.status === 404) {
+    await res.arrayBuffer().catch(() => {}); // read the tiny XML reply so the connection is released (not body.cancel(): it hung on Vercel, Iskaria app #52)
+    return null;
+  }
   if (!res.ok) await fail(`GET ${key}`, res);
   return res.text();
 }
