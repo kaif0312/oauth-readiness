@@ -40,7 +40,29 @@ export async function liveGuides(): Promise<Guide[]> {
   return guides.filter((g): g is Guide => !!g);
 }
 
-export async function getGuide(slug: string): Promise<Guide | null> {
+// Agents guess slugs ("Slack", "gmail", "outlook"); map what they send to a real slug before touching storage.
+const ALIASES: Record<string, string> = {
+  gmail: "google-gmail",
+  google: "google-search-analytics",
+  "search-console": "google-search-analytics",
+  ga4: "google-search-analytics",
+  "google-business-profile": "google-search-analytics",
+  outlook: "microsoft-graph",
+  microsoft: "microsoft-graph",
+  "microsoft-365": "microsoft-graph",
+  facebook: "meta",
+  instagram: "meta",
+  whatsapp: "meta",
+};
+
+export function normalizeSlug(input: string): string {
+  const s = slugify(input);
+  return ALIASES[s] ?? s;
+}
+
+export async function getGuide(input: string): Promise<Guide | null> {
+  const slug = normalizeSlug(input);
+  if (!slug) return null;
   const seed = seedGuides().find((g) => g.slug === slug);
   if (seed) return seed;
   if (useR2) return fetchGuide(objectKey(slug));

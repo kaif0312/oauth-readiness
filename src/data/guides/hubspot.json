@@ -8,7 +8,7 @@
     "difficulty": "moderate",
     "timeToFirstToken": "30-60 min",
     "timeToLaunch": "Same day (25 installs)",
-    "launchNote": "Immediate for up to 25 clinics; 3-10 weeks to lift the cap via Marketplace listing (time to reach 3 active unaffiliated installs + 10 business days first review, up to 60 days).",
+    "launchNote": "Immediate for up to 25 customer accounts; 3-10 weeks to lift the cap via Marketplace listing (time to reach 3 active unaffiliated installs + 10 business days first review, up to 60 days).",
     "reviewRequired": "None for the first 25 installs. Beyond 25: Marketplace listing review by HubSpot's Ecosystem Quality team. Certification is optional (60+ active installs, 6 months listed).",
     "cost": "Free",
     "evidence": {
@@ -55,7 +55,7 @@
       }
     },
     {
-      "item": "At least three active, unique installs in HubSpot production accounts unaffiliated with Iskaria (successful API activity in the past 30 days)",
+      "item": "At least three active, unique installs in HubSpot production accounts unaffiliated with your company (successful API activity in the past 30 days)",
       "requiredFor": "launch",
       "evidence": {
         "status": "sourced",
@@ -76,7 +76,7 @@
       }
     },
     {
-      "item": "Public setup documentation specific to the HubSpot integration (HubSpot provides a template). Not in the profile: MISSING.",
+      "item": "Public setup documentation specific to the HubSpot integration (HubSpot provides a template). The profile has no field for it, so write it yourself.",
       "requiredFor": "launch",
       "evidence": {
         "status": "sourced",
@@ -97,7 +97,7 @@
       }
     },
     {
-      "item": "App logo / listing images. Profile logo.square512Png is null: MISSING.",
+      "item": "App logo / listing images (profile logo.square512Png).",
       "profileKey": "logo.square512Png",
       "requiredFor": "launch",
       "evidence": {
@@ -165,7 +165,7 @@
       "title": "Configure app-hsmeta.json: uid, redirect URLs, scopes",
       "who": "agent",
       "phase": "build",
-      "detail": "Set a unique uid, config.distribution = \"marketplace\", config.auth.type = \"oauth\", redirectUrls = [\"https://app.iskaria.com/api/oauth/hubspot/callback\", \"http://localhost:3000/api/oauth/hubspot/callback\"], requiredScopes = crm.objects.contacts.read/write and crm.objects.deals.read/write (oauth is added automatically). Put anything not always needed in optionalScopes or conditionallyRequiredScopes.",
+      "detail": "Set a unique uid, config.distribution = \"marketplace\", config.auth.type = \"oauth\", redirectUrls = the profile's redirectUris with the provider set to hubspot (e.g. [\"https://<your-app-domain>/api/oauth/hubspot/callback\", \"http://localhost:3000/api/oauth/hubspot/callback\"]), requiredScopes = crm.objects.contacts.read/write and crm.objects.deals.read/write (oauth is added automatically). Put anything not always needed in optionalScopes or conditionallyRequiredScopes.",
       "estimate": "10 min",
       "fields": [
         {
@@ -215,10 +215,10 @@
       }
     },
     {
-      "title": "Roll out to the first clinics (up to 25)",
+      "title": "Roll out to the first customers (up to 25)",
       "who": "you",
       "phase": "launch",
-      "detail": "Clinics install via the OAuth link. Up to 25 installs need no review. Get at least three clinics, outside Iskaria, actively syncing (API calls in the last 30 days) to qualify for listing.",
+      "detail": "Customers install via the OAuth link. Up to 25 installs need no review. Get at least three customer accounts, outside your own organization, actively syncing (API calls in the last 30 days) to qualify for listing.",
       "estimate": "ongoing",
       "evidence": {
         "status": "sourced",
@@ -253,7 +253,7 @@
         },
         {
           "label": "Setup documentation URL",
-          "note": "MISSING in profile"
+          "note": "Not in the profile; supply it yourself."
         }
       ],
       "evidence": {
@@ -280,7 +280,7 @@
   "scopes": [
     {
       "name": "crm.objects.contacts.read",
-      "purpose": "Look up existing patients/leads before creating duplicates",
+      "purpose": "Look up existing contacts/leads before creating duplicates",
       "tier": "basic",
       "note": "Available to all accounts.",
       "evidence": {
@@ -341,7 +341,7 @@
       "title": "25-install cap until listed",
       "detail": "Since 22 Sep 2025, marketplace-distribution apps created on or migrated to the Projects platform are capped at 25 installs until approved for the Marketplace. Legacy public apps with more than 25 installs get the cap enforced when migrated.",
       "severity": "can-block-launch",
-      "workaround": "Start the listing as soon as three clinics are actively using it; for a handful of clinics, private distribution (10 accounts) also works.",
+      "workaround": "Start the listing as soon as three customers are actively using it; for a handful of customers, private distribution (10 accounts) also works.",
       "evidence": {
         "status": "sourced",
         "sourceIds": [
@@ -353,7 +353,7 @@
       "title": "Listing needs 3 active installs from unaffiliated production accounts",
       "detail": "Active installs count unique production accounts unaffiliated with your organisation with API/webhook activity in the past 30 days. Your own test or sandbox accounts do not count, despite some blogs saying they do.",
       "severity": "slows-you-down",
-      "workaround": "Onboard three real clinic HubSpot accounts first (Dr. Namshi's, Dr. Jefna's if they use HubSpot).",
+      "workaround": "Onboard three real, unaffiliated customer HubSpot accounts first (for example early design partners).",
       "evidence": {
         "status": "sourced",
         "sourceIds": [
@@ -388,14 +388,14 @@
     },
     {
       "title": "Restricted industries",
-      "detail": "Listed apps must not cater to or be exclusive to customers in HubSpot's restricted industries. Whether healthcare clinics fall under any restriction was not verified; HubSpot's HIPAA stance matters for patient data.",
+      "detail": "Listed apps must not cater to or be exclusive to customers in HubSpot's restricted industries. Check your customers' industry against the list: whether healthcare falls under any restriction was not verified, and HubSpot's HIPAA stance matters for patient data.",
       "severity": "info",
       "evidence": {
         "status": "inferred",
         "sourceIds": [
           "s2"
         ],
-        "note": "The requirement is sourced (Japanese mirror of the page); its application to clinics is not."
+        "note": "The requirement is sourced (Japanese mirror of the page); its application to healthcare is not."
       }
     }
   ],
@@ -409,8 +409,8 @@
     ],
     "youMust": [
       "Create the developer account and paste the personal access key for hs account auth",
-      "Approve installs in the test account and in each clinic's HubSpot",
-      "Recruit three unaffiliated clinic accounts to use it actively",
+      "Approve installs in the test account and in each customer's HubSpot",
+      "Recruit three unaffiliated customer accounts to use it actively",
       "Accept the App Partner Program Agreement and submit the listing"
     ]
   },
@@ -420,7 +420,7 @@
     "Real review wait beyond HubSpot's stated 10 business days / 60 days is anecdotal.",
     "Whether an unlisted app shows an extra warning at install is from a third-party write-up only (unified.to), not verified.",
     "Listing image/logo specs and whether a demo video is currently required were not confirmed; the English requirements page as summarised did not mention them.",
-    "Restricted-industry implications for healthcare clinics not checked."
+    "Restricted-industry implications for healthcare not checked."
   ],
   "sources": [
     {

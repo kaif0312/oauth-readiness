@@ -47,7 +47,7 @@
       }
     },
     {
-      "item": "HTTPS OAuth redirect URL (https://app.iskaria.com/api/oauth/slack/callback). The localhost URL in the profile is http and will be rejected; use an HTTPS tunnel for local dev.",
+      "item": "HTTPS OAuth redirect URL (your production callback from the profile's redirectUris). An http://localhost URL will be rejected; use an HTTPS tunnel for local dev.",
       "profileKey": "redirectUris",
       "requiredFor": "build",
       "evidence": {
@@ -102,7 +102,7 @@
       }
     },
     {
-      "item": "App icon. MISSING: the profile has no exported square PNG (logo.square512Png is null).",
+      "item": "App icon: a square PNG (profile logo).",
       "profileKey": "logo",
       "requiredFor": "launch",
       "evidence": {
@@ -127,7 +127,7 @@
         {
           "label": "display_information.description",
           "profileKey": "appDescription",
-          "note": "Tailor to useCases.slack: lead alerts and daily summaries."
+          "note": "Tailor to your Slack use case (profile useCases.slack), e.g. alerts and daily summaries."
         },
         {
           "label": "oauth_config.redirect_urls",
@@ -177,7 +177,7 @@
       "title": "Install to your workspace and post a test alert",
       "who": "you",
       "phase": "test",
-      "detail": "OAuth & Permissions > Install to Workspace, copy the bot token into server env, invite the bot to a channel (/invite @Iskaria) and call chat.postMessage. Posting is limited to about 1 message per second per channel.",
+      "detail": "OAuth & Permissions > Install to Workspace, copy the bot token into server env, invite the bot to a channel (/invite @<your app name>) and call chat.postMessage. Posting is limited to about 1 message per second per channel.",
       "estimate": "5 min",
       "evidence": {
         "status": "sourced",
@@ -257,7 +257,7 @@
   "scopes": [
     {
       "name": "chat:write",
-      "purpose": "Post lead alerts and daily summaries as the bot in channels it is in",
+      "purpose": "Post notifications and daily summaries as the bot in channels it is in",
       "tier": "basic",
       "evidence": {
         "status": "sourced",
@@ -318,7 +318,7 @@
   "blockers": [
     {
       "title": "History reads throttled to 1/min and 15 messages for non-Marketplace apps",
-      "detail": "Since 29 May 2025, commercially distributed apps not approved for the Marketplace (new apps and new installs of existing ones) get conversations.history and conversations.replies at 1 request per minute with limit capped at 15. Marketplace apps and internal customer-built apps keep 50+ requests/minute and 1,000 objects. Iskaria installs into many clinic workspaces, so it is in the throttled class.",
+      "detail": "Since 29 May 2025, commercially distributed apps not approved for the Marketplace (new apps and new installs of existing ones) get conversations.history and conversations.replies at 1 request per minute with limit capped at 15. Marketplace apps and internal customer-built apps keep 50+ requests/minute and 1,000 objects. A product that installs into many customer workspaces is in the throttled class.",
       "severity": "can-block-launch",
       "workaround": "Use the Events API / Socket Mode to receive messages as they happen; pursue Marketplace approval if deep history reads are core.",
       "evidence": {
@@ -331,7 +331,7 @@
     },
     {
       "title": "API Terms: Marketplace is the channel for commercial distribution",
-      "detail": "Slack's updated API Terms (effective 29 May 2025 for new apps, 30 June 2025 for older ones) call the Marketplace the only appropriate channel for commercially distributing apps, including templated custom apps that connect to a product. Unlisted distribution still works technically, but per-clinic 'internal' apps built from your manifest to dodge the limit are explicitly in scope.",
+      "detail": "Slack's updated API Terms (effective 29 May 2025 for new apps, 30 June 2025 for older ones) call the Marketplace the only appropriate channel for commercially distributing apps, including templated custom apps that connect to a product. Unlisted distribution still works technically, but per-customer 'internal' apps built from your manifest to dodge the limit are explicitly in scope.",
       "severity": "slows-you-down",
       "workaround": "Treat unlisted distribution as a pilot; plan for Marketplace review once 10 workspaces are active.",
       "evidence": {
@@ -367,7 +367,7 @@
     },
     {
       "title": "Redirect URL must be HTTPS",
-      "detail": "Redirect URLs must use HTTPS and cannot contain '#'; the profile's http://localhost callback will not work.",
+      "detail": "Redirect URLs must use HTTPS and cannot contain '#'; an http://localhost callback will not work.",
       "severity": "info",
       "workaround": "Use an HTTPS tunnel or a preview deployment for local OAuth testing.",
       "evidence": {
@@ -400,14 +400,14 @@
       "Log in at api.slack.com/apps and create the app (paste the manifest), or issue an app configuration token",
       "Install to the development workspace and copy client id/secret/signing secret into server env",
       "Activate public distribution",
-      "Get 10 clinic workspaces actively using the app before a Marketplace submission, then submit and answer reviewers",
-      "Decide whether Iskaria's use counts as commercial distribution under Slack's API Terms"
+      "Get 10 workspaces actively using the app before a Marketplace submission, then submit and answer reviewers",
+      "Decide whether your app's use counts as commercial distribution under Slack's API Terms"
     ]
   },
   "uncertainties": [
     "Whether existing installs of unlisted apps also became throttled on 3 March 2026: community posts say so, but Slack's own changelog (as fetched 2026-10-30) still says existing installs are not affected.",
     "Marketplace review times are Slack's stated maximums; real waits are not documented.",
-    "Slack does not define 'internal customer-built app' precisely, so whether a manifest-cloned per-clinic app keeps Tier 3 is unclear (and the Terms cover templated custom apps).",
+    "Slack does not define 'internal customer-built app' precisely, so whether a manifest-cloned per-customer app keeps Tier 3 is unclear (and the Terms cover templated custom apps).",
     "Exact Manage Distribution checklist items and app-icon size requirements were not fetched this session.",
     "Which AI/agent features need a paid plan is not itemised in the doc fetched."
   ],

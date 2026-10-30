@@ -43,7 +43,10 @@ Assignment brief and scope: the first message of the original session; deliverab
 | `src/lib/r2.ts` | R2 client: S3 API with SigV4 via node:crypto, no SDK (`r2Get` null on 404, `r2Put`, `r2List` first 1000 keys) |
 | `src/lib/store.ts` | seeds from disk; live guides in R2 (`guides/<slug>.json`), `.data/guides` locally; `takeGenerationSlot` daily cap (`DAILY_GENERATION_LIMIT`, default 40) |
 | `src/app/api/generate/route.ts` | SSE stream of agent events, `maxDuration` 300 |
-| `src/app/api/mcp/route.ts` | MCP server |
+| `src/app/api/mcp/route.ts` | MCP server. Tool descriptions steer the agent: list_guides -> get_profile {template:true} -> get_setup_plan {slug, profile}. Slugs are normalised + aliased (`normalizeSlug` in `store.ts`: gmail, outlook, Slack...). A browser GET returns the install page (`installHtml`) instead of a 405 |
+| `src/lib/install.ts` | ONE source for the per-client install snippets (Claude Code, Cursor + deeplink, VS Code + deeplink, Codex, Windsurf), the copy-paste agent prompt, `/llms.txt` and the `/api/mcp` HTML page. Change the MCP URL here only |
+| `src/lib/profile.ts` | `PROFILE_FIELDS` (keys a stranger fills; `required`, `list`), `profileTemplate()`, `parseProfile()` (object or JSON string). With a custom profile an absent key counts as missing |
+| `src/components/agent-panel.tsx` | "Set it up with your coding agent" panel (home `#agent`, every guide page): client tabs, copy buttons, prompt |
 | `scripts/` | `validate.ts`, `probe.ts`, `setup-github.ts`, `push-live.ts` (push a local `.data` guide to R2, reads it back). Run with `node` (type stripping) |
 
 Env (`.env.example`): `ANTHROPIC_API_KEY` (Vercel has it, unquoted; `.env.local` has it quoted, the code strips quotes),
@@ -67,9 +70,16 @@ in `.auth/` once made every CLI deploy fail silently with EBUSY).
    agents following `docs/research-brief.md`, then checked by a separate verifier.
 4. Save the Google console flow to the browser-flows library (`~/.claude/scripts/browser-flows/`, see the `browser-fast`
    skill) so the next Google setup is a replay. Steps and selectors are in "Google end to end" below.
-5. The folder sits on the Desktop root; the workspace map (`~/.claude/scripts/workspace.md`) says non-Iskaria projects go in
+5. Usability pass 2026-10-30 (branch `agent-ux`): two review agents (Krug/Norman audit of the site; an AI-developer walk through
+   the MCP). Done: agent panel + nav link, library before Generate, clickable rows with mobile labels, jump nav, readiness
+   relabelled as Iskaria's example, live-run stepper + retry, re-run confirmation, `/llms.txt`, stranger profiles in
+   get_setup_plan (missing keys, arrays, env names, verify), guides neutralised (`validate.ts` fails on Iskaria/clinic outside
+   sources/meta/evidence notes). Not done: `research_app` is still synchronous with no progress notifications (clients with a
+   ~60 s tool timeout give up; an async job + `get_research_status` is the fix) and unauthenticated (shared daily cap);
+   evidence chips still use `title` tooltips (invisible on touch).
+6. The folder sits on the Desktop root; the workspace map (`~/.claude/scripts/workspace.md`) says non-Iskaria projects go in
    `Desktop/Projects/<name>`. Move it when nothing runs from it (the `.vercel` link moves with the folder).
-6. The assignment named a company ("APM Integrations"); never confirmed what they are. If the owner shares a link, match the
+7. The assignment named a company ("APM Integrations"); never confirmed what they are. If the owner shares a link, match the
    README framing to it.
 
 ## Google end to end (the proof case, 2026-10-30)

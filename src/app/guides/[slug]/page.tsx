@@ -7,6 +7,8 @@ import { profile, profileHas, profileDisplay } from "@/lib/profile";
 import type { Guide } from "@/lib/guide";
 import { Difficulty, EvidenceTag, WhoTag } from "@/components/bits";
 import { PrintButton } from "@/components/print-button";
+import { AgentPanel } from "@/components/agent-panel";
+import { INSTALLS, agentPrompt } from "@/lib/install";
 
 export async function generateMetadata({ params }: PageProps<"/guides/[slug]">): Promise<Metadata> {
   const { slug } = await params;
@@ -27,13 +29,13 @@ function Have({ k }: { k?: string }) {
   return has ? (
     <span className="ev ev-tested" title={profileDisplay(k)}>✓ {profile.companyName} has it</span>
   ) : (
-    <span className="ev ev-inferred">✗ missing in profile</span>
+    <span className="ev ev-inferred">✗ {profile.companyName} lacks it</span>
   );
 }
 
 function Section({ title, children, id }: { title: string; children: React.ReactNode; id?: string }) {
   return (
-    <section className="mt-10" id={id}>
+    <section className="mt-10 scroll-mt-4" id={id}>
       <h2 className="text-lg font-semibold mb-3">{title}</h2>
       {children}
     </section>
@@ -43,13 +45,18 @@ function Section({ title, children, id }: { title: string; children: React.React
 function Readiness({ g }: { g: Guide }) {
   const withKey = g.prerequisites.filter((p) => p.profileKey && profileHas(p.profileKey) !== undefined);
   const missing = withKey.filter((p) => !profileHas(p.profileKey!));
+  const rest = g.prerequisites.length - withKey.length;
   return (
     <div className="panel p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <div className="font-semibold">
-          {profile.companyName} readiness: {withKey.length - missing.length} of {withKey.length} profile items in place
+        <div>
+          <div className="font-semibold">What you need before you start</div>
+          <div className="text-xs text-muted mt-0.5">
+            Example check against {profile.companyName}&apos;s profile: {withKey.length - missing.length} of {withKey.length} checkable items in place
+            {rest > 0 && <>, {rest} more to confirm yourself</>}. Your agent checks yours when you pass your own profile.
+          </div>
         </div>
-        <Link href="/profile" className="text-xs link">edit profile</Link>
+        <Link href="/profile" className="text-xs link">See the example profile</Link>
       </div>
       <ul className="mt-3 space-y-2 text-sm">
         {g.prerequisites.map((p, i) => (
@@ -74,15 +81,15 @@ export default async function GuidePage({ params }: PageProps<"/guides/[slug]">)
 
   return (
     <article className="wrap py-10">
-      <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
+      <Link href="/#library" className="text-sm link no-print">← All guides</Link>
+      <div className="flex flex-wrap items-center gap-2 text-xs text-muted mt-3">
         <span>{g.category}</span>·<a href={g.website} className="link">{g.website.replace(/^https?:\/\//, "")}</a>·
         <span>{g.meta.generatedBy === "live-agent" ? "generated live by the agent" : "researched guide"}, {g.meta.generatedAt}</span>
         <span className="ml-auto no-print"><PrintButton /></span>
       </div>
       <h1 className="text-3xl font-semibold tracking-tight mt-2">{g.app}</h1>
-      <p className="mt-3 text-[17px] max-w-3xl">{g.summary}</p>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-px mt-6 panel overflow-hidden bg-line">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-px mt-4 panel overflow-hidden bg-line">
         {[
           ["Difficulty", <Difficulty key="d" value={v.difficulty} />],
           ["First token", v.timeToFirstToken],
@@ -95,6 +102,7 @@ export default async function GuidePage({ params }: PageProps<"/guides/[slug]">)
           </div>
         ))}
       </div>
+      <p className="mt-4 text-[17px] max-w-3xl">{g.summary}</p>
       <div className="mt-3 text-sm text-muted space-y-1 max-w-3xl">
         <p><b className="text-ink">Review:</b> {v.reviewRequired}</p>
       </div>
@@ -106,6 +114,24 @@ export default async function GuidePage({ params }: PageProps<"/guides/[slug]">)
       )}
       <div className="mt-2 text-xs text-muted flex items-center gap-2">Verdict evidence <EvidenceTag e={v.evidence} guide={g} /></div>
 
+      <nav aria-label="On this page" className="mt-6 flex flex-wrap gap-x-4 gap-y-1 text-sm no-print">
+        {[
+          ["#agent", "Set up with your agent"],
+          ["#before", "Before you start"],
+          ["#steps", "Steps"],
+          ["#scopes", "Scopes"],
+          ["#blockers", "Blockers"],
+          ["#verification", "What we checked"],
+          ["#sources", "Sources"],
+        ].map(([href, label]) => (
+          <a key={href} href={href} className="link">{label}</a>
+        ))}
+      </nav>
+
+      <div className="mt-6">
+        <AgentPanel installs={INSTALLS} prompt={agentPrompt(g.slug, g.app)} title={`Set up ${g.app} with your coding agent`} />
+      </div>
+
       {g.slug === "github" && (
         <div className="mt-6 panel p-4 no-print flex flex-wrap items-center gap-3 justify-between">
           <div className="text-sm">
@@ -115,7 +141,7 @@ export default async function GuidePage({ params }: PageProps<"/guides/[slug]">)
         </div>
       )}
 
-      <Section title="Before you start">
+      <Section title="Before you start" id="before">
         <Readiness g={g} />
         <div className="panel p-4 mt-3 text-sm">
           <div className="flex flex-wrap items-center gap-2">
@@ -140,7 +166,7 @@ export default async function GuidePage({ params }: PageProps<"/guides/[slug]">)
         </div>
       </Section>
 
-      <Section title="Steps">
+      <Section title="Steps" id="steps">
         <div className="space-y-6">
           {PHASES.map((ph) => {
             const steps = g.steps.filter((s) => s.phase === ph.key);
@@ -191,7 +217,7 @@ export default async function GuidePage({ params }: PageProps<"/guides/[slug]">)
         </div>
       </Section>
 
-      <Section title="Scopes an agent typically needs">
+      <Section title="Scopes an agent typically needs" id="scopes">
         <div className="panel overflow-x-auto">
           <table className="w-full text-sm">
             <thead><tr className="label text-left"><th className="p-3">Scope</th><th className="p-3">Used for</th><th className="p-3">Review tier</th><th className="p-3">Evidence</th></tr></thead>
@@ -209,7 +235,7 @@ export default async function GuidePage({ params }: PageProps<"/guides/[slug]">)
         </div>
       </Section>
 
-      <Section title="What can slow you down or block approval">
+      <Section title="What can slow you down or block approval" id="blockers">
         <div className="space-y-2">
           {g.blockers.map((b, i) => (
             <div key={i} className="panel p-4">
@@ -248,7 +274,7 @@ export default async function GuidePage({ params }: PageProps<"/guides/[slug]">)
         )}
       </Section>
 
-      <Section title="Sources">
+      <Section title="Sources" id="sources">
         <ol className="space-y-2 text-sm">
           {g.sources.map((s) => (
             <li key={s.id} id={`src-${s.id}`} className="flex gap-2 scroll-mt-20">

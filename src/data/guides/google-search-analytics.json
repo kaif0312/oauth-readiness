@@ -3,7 +3,7 @@
   "app": "Google (Search Console, GA4, Business Profile)",
   "website": "https://developers.google.com/webmaster-tools",
   "category": "Marketing analytics",
-  "summary": "Moderate. You can be reading your own Search Console, GA4 and Business Profile data within about 30 minutes in Testing mode (we did it end to end for Iskaria). Only analytics.readonly is sensitive and needs verification (free, about 1-3 weeks, no CASA); business.manage and webmasters.readonly are non-sensitive. Business Profile is a separate gate: its APIs return nothing (0 requests/minute quota) until Google approves a separate API access request, so request it first. Catches: 7-day test tokens, gcloud's built-in client is blocked, and the support email must be your own account or a Google Group you manage.",
+  "summary": "Moderate. You can be reading your own Search Console, GA4 and Business Profile data within about 30 minutes in Testing mode (tested end to end on a real production app). Only analytics.readonly is sensitive and needs verification (free, about 1-3 weeks, no CASA); business.manage and webmasters.readonly are non-sensitive. Business Profile is a separate gate: its APIs return nothing (0 requests/minute quota) until Google approves a separate API access request, so request it first. Catches: 7-day test tokens, gcloud's built-in client is blocked, and the support email must be your own account or a Google Group you manage.",
   "verdict": {
     "difficulty": "moderate",
     "timeToFirstToken": "30 min",
@@ -69,7 +69,7 @@
       }
     },
     {
-      "item": "A homepage and privacy policy on a Search Console-verified domain. The policy must describe the Google user data you use. Iskaria's /privacy has no such section yet (checked 2026-10-30).",
+      "item": "A homepage and privacy policy on a Search Console-verified domain. The policy must describe the Google user data you use.",
       "profileKey": "privacyPolicyUrl",
       "requiredFor": "launch",
       "evidence": {
@@ -92,7 +92,7 @@
       }
     },
     {
-      "item": "A demo video uploaded to YouTube as Unlisted. Iskaria has none yet.",
+      "item": "A demo video uploaded to YouTube as Unlisted (profile demoVideoUrl).",
       "profileKey": "demoVideoUrl",
       "requiredFor": "launch",
       "evidence": {
@@ -103,7 +103,7 @@
       }
     },
     {
-      "item": "A support email that gets read. Iskaria has no shared support mailbox yet.",
+      "item": "A support email that gets read.",
       "profileKey": "supportEmail",
       "requiredFor": "launch",
       "evidence": {
@@ -165,8 +165,7 @@
         },
         {
           "label": "App logo",
-          "profileKey": "logo.square512Png",
-          "note": "Missing: no exported square PNG yet"
+          "profileKey": "logo.square512Png"
         },
         {
           "label": "Application home page",
@@ -201,7 +200,7 @@
       "title": "Audience: External, Testing, test users",
       "who": "you",
       "phase": "build",
-      "detail": "Under Audience, choose External and leave the publishing status as Testing. Add yourself and the pilot clinic accounts under Test users (100 at most).",
+      "detail": "Under Audience, choose External and leave the publishing status as Testing. Add yourself and your pilot users' accounts under Test users (100 at most).",
       "url": "https://console.cloud.google.com/auth/audience",
       "estimate": "3 min",
       "evidence": {
@@ -267,7 +266,7 @@
       "title": "Add a Google user data section to the privacy policy",
       "who": "agent-then-you",
       "phase": "launch",
-      "detail": "On iskaria.com/privacy, list the Google data read (Search Console performance, GA4 reports, Business Profile locations and reviews), why it is read, how it is stored, that it is not sold or used for ads, and how to revoke access. Add a statement that use of the data adheres to the Google API Services User Data Policy, including the Limited Use requirements.",
+      "detail": "On your privacy policy page (profile privacyPolicyUrl), list the Google data read (Search Console performance, GA4 reports, Business Profile locations and reviews), why it is read, how it is stored, that it is not sold or used for ads, and how to revoke access. Add a statement that use of the data adheres to the Google API Services User Data Policy, including the Limited Use requirements.",
       "url": "https://developers.google.com/terms/api-services-user-data-policy",
       "estimate": "1 h",
       "fields": [
@@ -294,8 +293,7 @@
       "fields": [
         {
           "label": "YouTube link",
-          "profileKey": "demoVideoUrl",
-          "note": "Missing"
+          "profileKey": "demoVideoUrl"
         }
       ],
       "evidence": {
@@ -324,7 +322,7 @@
   "scopes": [
     {
       "name": "https://www.googleapis.com/auth/webmasters.readonly",
-      "purpose": "Read Search Console performance (queries, pages, clicks) for the clinic's site",
+      "purpose": "Read Search Console performance (queries, pages, clicks) for the user's site",
       "tier": "basic",
       "evidence": {
         "status": "tested",
@@ -337,7 +335,7 @@
     },
     {
       "name": "https://www.googleapis.com/auth/analytics.readonly",
-      "purpose": "Run GA4 reports (sessions, conversions, sources) for the clinic's property",
+      "purpose": "Run GA4 reports (sessions, conversions, sources) for the user's property",
       "tier": "sensitive",
       "evidence": {
         "status": "tested",
@@ -349,7 +347,7 @@
     },
     {
       "name": "https://www.googleapis.com/auth/business.manage",
-      "purpose": "Read the clinic's Business Profile locations, reviews and performance, and reply to reviews",
+      "purpose": "Read the user's Business Profile locations, reviews and performance, and reply to reviews",
       "tier": "basic",
       "note": "Non-sensitive in the console, but Business Profile still needs Google's separate API access approval (0 QPM until then).",
       "evidence": {
@@ -400,7 +398,7 @@
     },
     {
       "title": "7-day refresh tokens in Testing",
-      "detail": "Every connected account has to log in again weekly until the app is In production. Clinic staff will notice broken reports.",
+      "detail": "Every connected account has to log in again weekly until the app is In production. Your users will notice broken reports.",
       "severity": "slows-you-down",
       "workaround": "Submit for verification as soon as the policy and video are ready",
       "evidence": {
@@ -425,9 +423,9 @@
     },
     {
       "title": "Search Console: sc-domain 403 and no backfill",
-      "detail": "A `sc-domain:` property returns 403 to an account that is only siteUnverifiedUser. Data exists only from the day the property was added, so a newly added clinic has no history.",
+      "detail": "A `sc-domain:` property returns 403 to an account that is only siteUnverifiedUser. Data exists only from the day the property was added, so a newly added site has no history.",
       "severity": "info",
-      "workaround": "Have the clinic's owner grant Full user or Owner, and add the property as early as possible",
+      "workaround": "Have the site's owner grant Full user or Owner, and add the property as early as possible",
       "evidence": {
         "status": "tested",
         "sourceIds": [
@@ -436,8 +434,8 @@
       }
     },
     {
-      "title": "Privacy policy and demo video missing",
-      "detail": "Verification checks the policy's Google user data disclosure and needs an Unlisted YouTube demo. Iskaria has neither yet.",
+      "title": "Privacy policy disclosure and demo video required",
+      "detail": "Verification checks the policy's Google user data disclosure and needs an Unlisted YouTube demo. Have both ready before you submit.",
       "severity": "can-block-launch",
       "evidence": {
         "status": "tested",
@@ -479,7 +477,7 @@
     ]
   },
   "uncertainties": [
-    "Google publishes no per-scope sensitivity list for webmasters.readonly and analytics.readonly. 'Sensitive' is inferred from the unverified-app warning Iskaria saw and from community docs.",
+    "Google publishes no per-scope sensitivity list for webmasters.readonly and analytics.readonly. 'Sensitive' is inferred from the unverified-app warning seen in our own test project and from community docs.",
     "business.manage: sources conflict (sensitive per Unified.to; non-sensitive in some consoles in 2026, with external users still blocked). The fix path is unknown.",
     "Business Profile access approval time: Google gives no figure, only 'A follow-up email will be sent'. Community reports range from several days to a few weeks.",
     "Sensitive review duration: Google says up to 10 days, but follow-up rounds can stretch it. Our estimate is anecdotal beyond that."

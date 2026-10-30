@@ -5,9 +5,10 @@ import { useState } from "react";
 export function PrintButton() {
   const [copied, setCopied] = useState(false);
   return (
-    <span className="inline-flex gap-3">
+    <span className="inline-flex gap-2">
       <button
-        className="link"
+        type="button"
+        className="btn-sm"
         onClick={() => {
           navigator.clipboard?.writeText(window.location.href).then(() => {
             setCopied(true);
@@ -15,9 +16,9 @@ export function PrintButton() {
           });
         }}
       >
-        {copied ? "Link copied" : "Copy link"}
+        {copied ? "Link copied ✓" : "Copy link"}
       </button>
-      <button className="link" onClick={() => window.print()}>Print / PDF</button>
+      <button type="button" className="btn-sm" onClick={() => window.print()}>Print / PDF</button>
     </span>
   );
 }

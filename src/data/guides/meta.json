@@ -8,7 +8,7 @@
     "difficulty": "hard",
     "timeToFirstToken": "30-60 min",
     "timeToLaunch": "2-8 weeks",
-    "launchNote": "First token: 30-60 min (own Page/IG/WhatsApp test number, Standard Access, Development mode). 2-8 weeks from scratch (Business Verification + App Review + Access Verification, often one or more resubmissions); 1-4 weeks to add publishing scopes to an already verified, live app like Iskaria's.",
+    "launchNote": "First token: 30-60 min (own Page/IG/WhatsApp test number, Standard Access, Development mode). 2-8 weeks from scratch (Business Verification + App Review + Access Verification, often one or more resubmissions); 1-4 weeks to add publishing scopes to an already verified, live app.",
     "reviewRequired": "App Review per permission for Advanced Access (screencast + written use case each), Business Verification of the app's business portfolio, and for WhatsApp Embedded Signup the Tech Provider Access Verification; afterwards an annual Data Use Checkup",
     "cost": "Free (WhatsApp billed per msg)",
     "costNote": "free to register and review; WhatsApp conversations are billed per message to the client's WhatsApp Business Account (client adds a payment method)",
@@ -85,7 +85,7 @@
         "sourceIds": [
           "m6"
         ],
-        "note": "The profile has no exported logo PNG yet (logo.square512Png is null). The required icon pixel size was not checked this session."
+        "note": "The required icon pixel size was not checked."
       }
     },
     {
@@ -99,7 +99,7 @@
           "m6",
           "m12"
         ],
-        "note": "The profile says 'unknown', but Iskaria's app already holds Advanced Access, which requires verification. Update the profile. Also missing: legalEntity is null."
+        "note": "Holding Advanced Access implies a verified business (inferred from Iskaria's production app, which holds Advanced Access)."
       }
     },
     {
@@ -111,7 +111,7 @@
         "sourceIds": [
           "m3"
         ],
-        "note": "The profile has no demo video (demoVideoUrl is null). Record new videos for each submission."
+        "note": "Record new videos for each submission."
       }
     },
     {
@@ -135,7 +135,7 @@
           "m8",
           "m17"
         ],
-        "note": "app.iskaria.com. The http://localhost redirect in the profile does not work for Embedded Signup."
+        "note": "Use your HTTPS app domain. An http://localhost redirect does not work for Embedded Signup."
       }
     }
   ],
@@ -187,7 +187,7 @@
         {
           "label": "Terms of Service URL",
           "profileKey": "termsUrl",
-          "note": "Confirm https://iskaria.com/terms is live before submitting"
+          "note": "Confirm your terms URL is live before submitting"
         },
         {
           "label": "User data deletion (Data deletion instructions URL)",
@@ -195,8 +195,7 @@
         },
         {
           "label": "App icon",
-          "profileKey": "logo.square512Png",
-          "note": "Missing in profile"
+          "profileKey": "logo.square512Png"
         }
       ],
       "evidence": {
@@ -217,7 +216,7 @@
         {
           "label": "Valid OAuth Redirect URIs",
           "profileKey": "redirectUris",
-          "note": "Use the https://app.iskaria.com callback"
+          "note": "Use your HTTPS production callback, not localhost"
         },
         {
           "label": "Allowed Domains for the JavaScript SDK",
@@ -255,8 +254,7 @@
       "fields": [
         {
           "label": "Legal business name",
-          "profileKey": "legalEntity",
-          "note": "Missing in profile"
+          "profileKey": "legalEntity"
         },
         {
           "label": "Website",
@@ -300,8 +298,7 @@
         },
         {
           "label": "Screencast (per permission)",
-          "profileKey": "demoVideoUrl",
-          "note": "Missing in profile"
+          "profileKey": "demoVideoUrl"
         }
       ],
       "evidence": {
@@ -332,7 +329,7 @@
       "title": "Switch the app to Live and have every Page reconnect",
       "who": "agent-then-you",
       "phase": "launch",
-      "detail": "Set App Mode to Live. Each client then has to go through Facebook Login for Business again so their Page/IG token carries the newly approved scopes. Old tokens keep failing on publish calls with Graph error 10 or 200-299 until they reconnect. An agent can detect missing scopes (debug_token) and prompt each clinic.",
+      "detail": "Set App Mode to Live. Each client then has to go through Facebook Login for Business again so their Page/IG token carries the newly approved scopes. Old tokens keep failing on publish calls with Graph error 10 or 200-299 until they reconnect. An agent can detect missing scopes (debug_token) and prompt each customer.",
       "estimate": "5 min + per-client reconnect",
       "evidence": {
         "status": "tested",
@@ -360,28 +357,30 @@
   "scopes": [
     {
       "name": "pages_messaging",
-      "purpose": "Read and reply to the clinic Page's Messenger conversations",
+      "purpose": "Read and reply to the connected Page's Messenger conversations",
       "tier": "sensitive",
-      "note": "Depends on pages_manage_metadata and pages_show_list. Iskaria already holds it.",
+      "note": "Depends on pages_manage_metadata and pages_show_list.",
       "evidence": {
         "status": "tested",
         "sourceIds": [
           "m5",
           "m17"
-        ]
+        ],
+        "note": "Tested on a real production app (Iskaria's live Meta app), which already holds this scope."
       }
     },
     {
       "name": "pages_manage_posts",
-      "purpose": "Publish, edit and delete the clinic's own Page posts",
+      "purpose": "Publish, edit and delete the connected Page's own posts",
       "tier": "sensitive",
-      "note": "Depends on pages_read_engagement and pages_show_list. Iskaria does NOT have it yet: publish calls fail (Graph error 10 / 200-299) until Advanced Access is granted.",
+      "note": "Depends on pages_read_engagement and pages_show_list. Without it, publish calls fail (Graph error 10 / 200-299) until Advanced Access is granted.",
       "evidence": {
         "status": "tested",
         "sourceIds": [
           "m5",
           "m17"
-        ]
+        ],
+        "note": "Tested on a real production app (Iskaria's live Meta app), which does not hold it yet: publish calls fail with Graph error 10 / 200-299."
       }
     },
     {
@@ -398,7 +397,7 @@
     },
     {
       "name": "instagram_manage_messages",
-      "purpose": "Read and reply to the clinic's Instagram Direct messages",
+      "purpose": "Read and reply to the connected account's Instagram Direct messages",
       "tier": "sensitive",
       "note": "Facebook Login path; needs instagram_basic, pages_read_engagement, pages_show_list. The Instagram Login path uses instagram_business_manage_messages instead and needs no linked Page.",
       "evidence": {
@@ -412,21 +411,22 @@
     },
     {
       "name": "instagram_content_publish",
-      "purpose": "Publish the clinic's organic Instagram feed posts",
+      "purpose": "Publish the connected account's organic Instagram feed posts",
       "tier": "sensitive",
-      "note": "Not yet held by Iskaria. Instagram Login equivalent: instagram_business_content_publish.",
+      "note": "Instagram Login equivalent: instagram_business_content_publish.",
       "evidence": {
         "status": "tested",
         "sourceIds": [
           "m5",
           "m11",
           "m17"
-        ]
+        ],
+        "note": "Tested on a real production app (Iskaria's live Meta app), which does not hold it yet."
       }
     },
     {
       "name": "whatsapp_business_messaging",
-      "purpose": "Send and receive WhatsApp messages, media and templates for the clinic's number",
+      "purpose": "Send and receive WhatsApp messages, media and templates for the connected business number",
       "tier": "sensitive",
       "note": "Depends on whatsapp_business_management. Needed for the Tech Provider path. Review video must show a message sent from the app arriving in WhatsApp.",
       "evidence": {
@@ -441,13 +441,14 @@
       "name": "business_management",
       "purpose": "Read and manage the client's business portfolio assets (Pages, ad accounts, WABAs) via the Business Manager API",
       "tier": "sensitive",
-      "note": "Iskaria holds it. Request only if you truly manage portfolio assets; reviewers question it often.",
+      "note": "Request only if you truly manage portfolio assets; reviewers question it often.",
       "evidence": {
         "status": "tested",
         "sourceIds": [
           "m5",
           "m17"
-        ]
+        ],
+        "note": "Tested on a real production app (Iskaria's live Meta app), which already holds this scope."
       }
     }
   ],
@@ -469,7 +470,7 @@
       "title": "Business Verification rejected or stuck",
       "detail": "Advanced Access is impossible without Business Verification. A legal name that doesn't match the documents, or a website without the legal entity in its footer, is a common cause of rejection.",
       "severity": "can-block-launch",
-      "workaround": "Fill legalEntity in the profile and make the iskaria.com footer show the same legal name.",
+      "workaround": "Fill legalEntity in the profile and make your website footer show the same legal name.",
       "evidence": {
         "status": "sourced",
         "sourceIds": [
@@ -547,7 +548,7 @@
       "Draft a distinct App Review use-case description per permission from useCases.meta",
       "Write screencast scripts (login > consent > action > visible result) per permission",
       "Implement Facebook Login for Business, the data deletion callback and webhook handlers",
-      "Detect tokens missing new scopes (debug_token) and prompt each clinic to reconnect",
+      "Detect tokens missing new scopes (debug_token) and prompt each customer to reconnect",
       "Monitor Graph error codes 10 / 200-299 and surface 'needs review/reconnect'"
     ],
     "youMust": [
@@ -563,9 +564,8 @@
     "Review times: Meta says 'a decision within a week'; the ~20-day per-cycle figure and the 4-week Business Verification figure are anecdotal (2026 third-party posts).",
     "Exact use-case labels in the 2026 app dashboard for Instagram and WhatsApp were not confirmed in official docs this session; only 'Manage everything on your Page' was.",
     "Whether Business-type apps still show a Development/Live toggle in the use-case dashboard; Meta's app-modes page does not address Business apps specifically.",
-    "Whether Iskaria's business portfolio is formally recorded as verified: profile says 'unknown' although Advanced Access implies it.",
-    "Meta's WhatsApp docs are moving to developers.facebook.com/documentation/business-messaging/...; some older /docs/whatsapp deep links may redirect or 404.",
-    "Whether https://iskaria.com/terms and /support are live was not checked."
+    "Whether holding Advanced Access always means the business portfolio is formally recorded as verified (inferred, not confirmed).",
+    "Meta's WhatsApp docs are moving to developers.facebook.com/documentation/business-messaging/...; some older /docs/whatsapp deep links may redirect or 404."
   ],
   "sources": [
     {

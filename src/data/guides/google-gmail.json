@@ -3,7 +3,7 @@
   "app": "Google (Gmail API)",
   "website": "https://developers.google.com/workspace/gmail/api",
   "category": "Email",
-  "summary": "Setup takes about 30 minutes, and your own account can connect in Testing mode the same day. How hard launch is depends on the scope tier. With gmail.send alone (sensitive), you need brand and sensitive-scope verification: free, about 1-3 weeks. Reading, modifying or drafting mail in Gmail (gmail.readonly, gmail.modify, gmail.compose, gmail.metadata) uses restricted scopes. Those add a paid CASA security assessment by an authorized assessor, repeated every 12 months, so allow 4-10+ weeks. For Iskaria: keep drafts inside the app and request only gmail.send.",
+  "summary": "Setup takes about 30 minutes, and your own account can connect in Testing mode the same day. How hard launch is depends on the scope tier. With gmail.send alone (sensitive), you need brand and sensitive-scope verification: free, about 1-3 weeks. Reading, modifying or drafting mail in Gmail (gmail.readonly, gmail.modify, gmail.compose, gmail.metadata) uses restricted scopes. Those add a paid CASA security assessment by an authorized assessor, repeated every 12 months, so allow 4-10+ weeks. If your app can write drafts itself, keep drafts inside your app and request only gmail.send.",
   "verdict": {
     "difficulty": "hard",
     "timeToFirstToken": "30 min",
@@ -61,7 +61,7 @@
       }
     },
     {
-      "item": "A privacy policy on the same domain that says how the app accesses, uses, stores and shares Google user data, with a Limited Use compliance statement. Iskaria's current policy has no such section (checked 2026-10-30).",
+      "item": "A privacy policy on the same domain that says how the app accesses, uses, stores and shares Google user data, with a Limited Use compliance statement.",
       "profileKey": "privacyPolicyUrl",
       "requiredFor": "launch",
       "evidence": {
@@ -83,11 +83,11 @@
         "sourceIds": [
           "s2"
         ],
-        "note": "The profile shows iskaria.com verified in Search Console. Make sure the verifying account is also on the Cloud project."
+        "note": "The profile's domainVerified.googleSearchConsole records this. Make sure the verifying account is also on the Cloud project."
       }
     },
     {
-      "item": "A demo video uploaded to YouTube as Unlisted. Iskaria has none yet (profile demoVideoUrl is null).",
+      "item": "A demo video uploaded to YouTube as Unlisted (profile demoVideoUrl).",
       "profileKey": "demoVideoUrl",
       "requiredFor": "launch",
       "evidence": {
@@ -99,7 +99,7 @@
       }
     },
     {
-      "item": "A user support email and developer contact emails that get read. A shared mailbox is better than one person's inbox, because annual re-verification emails go there. Iskaria has no shared mailbox yet (sharedSupportMailbox is null).",
+      "item": "A user support email and developer contact emails that get read. A shared mailbox is better than one person's inbox, because annual re-verification emails go there.",
       "profileKey": "supportEmail",
       "requiredFor": "launch",
       "evidence": {
@@ -152,12 +152,12 @@
         {
           "label": "User support email",
           "profileKey": "supportEmail",
-          "note": "Use a shared mailbox if you have one. Iskaria has none yet."
+          "note": "Use a shared mailbox if you have one."
         },
         {
           "label": "App logo",
           "profileKey": "logo.square512Png",
-          "note": "Missing: export a square PNG of the Systems Mark. Adding a logo also requires brand verification."
+          "note": "A square PNG of your logo. Adding a logo also requires brand verification."
         },
         {
           "label": "Application home page",
@@ -193,7 +193,7 @@
       "title": "Set Audience to External, Testing, and add test users",
       "who": "you",
       "phase": "build",
-      "detail": "Under Audience, choose External, because clinic mailboxes sit outside your Workspace organization. Leave the publishing status as Testing. Under Test users, click Add users, add your own account and up to 99 more, then save.",
+      "detail": "Under Audience, choose External, because your users' mailboxes sit outside your Workspace organization. Leave the publishing status as Testing. Under Test users, click Add users, add your own account and up to 99 more, then save.",
       "url": "https://console.cloud.google.com/auth/audience",
       "estimate": "3 min",
       "evidence": {
@@ -264,14 +264,14 @@
       "title": "Add a Google user data and Limited Use section to the privacy policy",
       "who": "agent-then-you",
       "phase": "launch",
-      "detail": "On iskaria.com/privacy, state which Gmail data is accessed and why, how it is stored and shared, and how to revoke access or delete it. Add the Limited Use statement, e.g. '<App>'s use and transfer of information received from Google APIs will adhere to the Google API Services User Data Policy, including the Limited Use requirements.' Also state that Workspace data is not used to train generalized AI/ML models. An agent can draft this. A human approves it and publishes it on the domain.",
+      "detail": "On your privacy policy page (profile privacyPolicyUrl), state which Gmail data is accessed and why, how it is stored and shared, and how to revoke access or delete it. Add the Limited Use statement, e.g. '<App>'s use and transfer of information received from Google APIs will adhere to the Google API Services User Data Policy, including the Limited Use requirements.' Also state that Workspace data is not used to train generalized AI/ML models. An agent can draft this. A human approves it and publishes it on the domain.",
       "url": "https://developers.google.com/terms/api-services-user-data-policy",
       "estimate": "1-2 h",
       "fields": [
         {
           "label": "Privacy policy URL",
           "profileKey": "privacyPolicyUrl",
-          "note": "Iskaria's policy has no such section yet (checked 2026-10-30)."
+          "note": "Must include the Gmail data disclosure and the Limited Use statement."
         }
       ],
       "evidence": {
@@ -291,8 +291,7 @@
       "fields": [
         {
           "label": "YouTube link",
-          "profileKey": "demoVideoUrl",
-          "note": "Missing in the Iskaria profile"
+          "profileKey": "demoVideoUrl"
         }
       ],
       "evidence": {
@@ -341,9 +340,9 @@
   "scopes": [
     {
       "name": "https://www.googleapis.com/auth/gmail.send",
-      "purpose": "Send patient follow-up emails from the clinic's mailbox. Drafts are written and stored in Iskaria.",
+      "purpose": "Send email from the user's mailbox (e.g. follow-ups drafted and stored inside your app)",
       "tier": "sensitive",
-      "note": "This is the only Gmail scope that both sends mail and avoids CASA. Iskaria's use case needs nothing more.",
+      "note": "This is the only Gmail scope that both sends mail and avoids CASA. An app that only needs to send needs nothing more.",
       "evidence": {
         "status": "sourced",
         "sourceIds": [
@@ -353,7 +352,7 @@
     },
     {
       "name": "https://www.googleapis.com/auth/gmail.compose",
-      "purpose": "Create drafts in the clinic's Gmail so staff can review them there before sending",
+      "purpose": "Create drafts in the user's Gmail so they can review them there before sending",
       "tier": "restricted",
       "note": "Easy to mistake for a light scope, but it is restricted and triggers CASA",
       "evidence": {
@@ -365,7 +364,7 @@
     },
     {
       "name": "https://www.googleapis.com/auth/gmail.readonly",
-      "purpose": "Read patient replies so the assistant can answer or log them",
+      "purpose": "Read incoming replies so the agent can answer or log them",
       "tier": "restricted",
       "evidence": {
         "status": "sourced",
@@ -399,7 +398,7 @@
     },
     {
       "name": "https://www.googleapis.com/auth/gmail.labels",
-      "purpose": "Create and apply an 'Iskaria' label",
+      "purpose": "Create and apply your app's own label",
       "tier": "basic",
       "note": "Non-sensitive",
       "evidence": {
@@ -415,7 +414,7 @@
       "title": "Any read or draft scope means a paid security assessment every year",
       "detail": "gmail.readonly, gmail.modify, gmail.compose and gmail.metadata are restricted. If restricted-scope data reaches or passes through your server, you need a CASA assessment from an authorized assessor, repeated at least every 12 months after the Letter of Assessment date. Miss the renewal and you lose access to the scopes.",
       "severity": "can-block-launch",
-      "workaround": "Design for gmail.send only: draft in Iskaria and send through Gmail. Add read scopes later, as their own verification round.",
+      "workaround": "Design for gmail.send only: draft in your app and send through Gmail. Add read scopes later, as their own verification round.",
       "evidence": {
         "status": "sourced",
         "sourceIds": [
@@ -426,7 +425,7 @@
     },
     {
       "title": "Privacy policy lacks a Google user data / Limited Use section",
-      "detail": "Brand and scope verification check that the policy explains how Google user data is accessed, used, stored and shared, and that it states Limited Use compliance. Iskaria's /privacy has none of this today.",
+      "detail": "Brand and scope verification check that the policy explains how Google user data is accessed, used, stored and shared, and that it states Limited Use compliance. Check your policy for both before you submit.",
       "severity": "can-block-launch",
       "workaround": "Add the section before you submit (see the step above)",
       "evidence": {
@@ -452,7 +451,7 @@
     },
     {
       "title": "Testing mode is weekly re-login, and the user cap never resets",
-      "detail": "In Testing, refresh tokens die after 7 days, so a pilot clinic has to re-consent every week. An unverified production app is limited to 100 new users over the project's lifetime.",
+      "detail": "In Testing, refresh tokens die after 7 days, so every test user (e.g. a pilot customer) has to re-consent every week. An unverified production app is limited to 100 new users over the project's lifetime.",
       "severity": "slows-you-down",
       "workaround": "Keep pilots on a separate test project. Submit for verification early.",
       "evidence": {
@@ -511,7 +510,7 @@
     "Real review durations: Google states a few minutes for automated brand checks (2-3 business days if manual), up to 10 days for sensitive and 'several weeks' for restricted. Community reports range from days to more than 2 months when there are follow-up rounds.",
     "CASA pricing and options: Google publishes no price. The figures come from TAC Security's page and blogs. Community posts (2026) say the free self-scan route for Tier 2 is gone and every option is paid. We could not confirm that on an official Google page.",
     "Whether a send-only server needs CASA: the restricted-scope rules apply to restricted scopes only, so gmail.send alone should not need it. We did not test a Gmail verification ourselves.",
-    "Iskaria's own setup was tested with Search Console and Analytics scopes, not Gmail. The Gmail-specific steps are sourced, not tested."
+    "The end-to-end test behind these Google guides (a real production app, 2026-10) used Search Console and Analytics scopes, not Gmail. The Gmail-specific steps are sourced, not tested."
   ],
   "sources": [
     {

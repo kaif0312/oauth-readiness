@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Nav } from "@/components/nav";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -17,12 +18,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <header className="border-b border-line no-print">
           <div className="wrap flex items-center justify-between h-14">
-            <Link href="/" className="font-semibold tracking-tight">OAuth Readiness</Link>
-            <nav className="flex gap-5 text-sm text-muted">
-              <Link href="/">Guides</Link>
-              <Link href="/profile">Developer profile</Link>
-              <Link href="/method">Evidence</Link>
-            </nav>
+            <Link href="/" className="font-semibold tracking-tight whitespace-nowrap">OAuth Readiness</Link>
+            <Nav />
           </div>
         </header>
         <main className="flex-1">{children}</main>

@@ -60,7 +60,7 @@
         "sourceIds": [
           "l4"
         ],
-        "note": "The profile's legalEntity is null. This is the main thing missing for LinkedIn."
+        "note": "Comes from the profile's legalEntity; the legal name and address must match your registration documents."
       }
     },
     {
@@ -72,7 +72,7 @@
         "sourceIds": [
           "l4"
         ],
-        "note": "ibrahim@iskaria.com is on the company domain, which should pass."
+        "note": "An address on the company's own domain should pass."
       }
     },
     {
@@ -105,8 +105,7 @@
         "status": "sourced",
         "sourceIds": [
           "l4"
-        ],
-        "note": "The profile has no exported logo PNG."
+        ]
       }
     },
     {
@@ -117,8 +116,7 @@
         "status": "sourced",
         "sourceIds": [
           "l4"
-        ],
-        "note": "The profile has no demo video."
+        ]
       }
     },
     {
@@ -130,16 +128,16 @@
         "sourceIds": [
           "l7"
         ],
-        "note": "Use the https://app.iskaria.com callback. Docs say to add redirect URLs via HTTPS; the profile's http://localhost entry may not be accepted."
+        "note": "Use your HTTPS production callback. Docs say to add redirect URLs via HTTPS; an http://localhost entry may not be accepted."
       }
     }
   ],
   "steps": [
     {
-      "title": "Create or confirm the Iskaria LinkedIn Company Page",
+      "title": "Create or confirm your LinkedIn Company Page",
       "who": "you",
       "phase": "build",
-      "detail": "Create the Page under a real member account (no fake/headless profiles) and set its website to iskaria.com. Business verification on LinkedIn's side is checked against this Page and domain.",
+      "detail": "Create the Page under a real member account (no fake/headless profiles) and set its website to your company domain. Business verification on LinkedIn's side is checked against this Page and domain.",
       "estimate": "15 min",
       "fields": [
         {
@@ -159,7 +157,7 @@
       "title": "Create a NEW developer app just for Community Management",
       "who": "you",
       "phase": "build",
-      "detail": "linkedin.com/developers/apps/new: name, the Iskaria Page, privacy policy URL, logo. Don't add Sign In with LinkedIn or other products to this app first. LinkedIn only lets you request Community Management on new apps that have no other API products. Use a separate app for login if you need one.",
+      "detail": "linkedin.com/developers/apps/new: name, your Company Page, privacy policy URL, logo. Don't add Sign In with LinkedIn or other products to this app first. LinkedIn only lets you request Community Management on new apps that have no other API products. Use a separate app for login if you need one.",
       "url": "https://www.linkedin.com/developers/apps/new",
       "estimate": "10 min",
       "fields": [
@@ -177,8 +175,7 @@
         },
         {
           "label": "App logo",
-          "profileKey": "logo.square512Png",
-          "note": "Missing in profile"
+          "profileKey": "logo.square512Png"
         }
       ],
       "evidence": {
@@ -193,7 +190,7 @@
       "title": "Have the Page super admin verify the app",
       "who": "you",
       "phase": "build",
-      "detail": "Settings tab > Verify. Send the verification request to a super admin of the Iskaria Page, who has 30 days to approve. Unverified apps fail Development tier vetting.",
+      "detail": "Settings tab > Verify. Send the verification request to a super admin of your Company Page, who has 30 days to approve. Unverified apps fail Development tier vetting.",
       "estimate": "5 min",
       "evidence": {
         "status": "sourced",
@@ -227,13 +224,12 @@
       "title": "Apply for Community Management API Development tier",
       "who": "agent-then-you",
       "phase": "launch",
-      "detail": "Products tab > Community Management API > access form. Give the legal name, registered address, website, privacy policy and business email (then verify the email), and describe the use case: a clinic's assistant posts to that clinic's own Page. Read the restricted use cases first. An agent can draft the use-case text; a human submits.",
+      "detail": "Products tab > Community Management API > access form. Give the legal name, registered address, website, privacy policy and business email (then verify the email), and describe the use case: your app posts to each customer's own Page on their behalf. Read the restricted use cases first. An agent can draft the use-case text; a human submits.",
       "estimate": "30 min hands-on; ~10-14 business days reported",
       "fields": [
         {
           "label": "Organization legal name",
-          "profileKey": "legalEntity",
-          "note": "Missing in profile"
+          "profileKey": "legalEntity"
         },
         {
           "label": "Business email",
@@ -296,8 +292,7 @@
       "fields": [
         {
           "label": "Screencast",
-          "profileKey": "demoVideoUrl",
-          "note": "Missing in profile"
+          "profileKey": "demoVideoUrl"
         },
         {
           "label": "Company overview",
@@ -330,7 +325,7 @@
   "scopes": [
     {
       "name": "w_organization_social",
-      "purpose": "Create posts, comments and reactions as the clinic's Company Page",
+      "purpose": "Create posts, comments and reactions as a Company Page the user administers",
       "tier": "partner-only",
       "note": "Only via the Community Management (or Advertising) API. The member must be an admin of that Page.",
       "evidence": {
@@ -365,7 +360,7 @@
     },
     {
       "name": "w_member_social",
-      "purpose": "Post as the authenticated person (e.g. a doctor's own profile), not as the Page",
+      "purpose": "Post as the authenticated person (e.g. a team member's own profile), not as the Page",
       "tier": "basic",
       "note": "Open via the self-serve Share on LinkedIn product. Using it with an organization author returns HTTP 400 'Organization permissions must be used when using organization as author'.",
       "evidence": {
@@ -396,7 +391,7 @@
       "title": "No registered legal entity on file",
       "detail": "Community Management is only for registered legal organizations with commercial use cases. LinkedIn checks the organization, website/domain and business email.",
       "severity": "can-block-launch",
-      "workaround": "Fill legalEntity, make the Page website iskaria.com, and use the iskaria.com email.",
+      "workaround": "Fill legalEntity in the profile, make the Page website your company domain, and use an email on that domain.",
       "evidence": {
         "status": "sourced",
         "sourceIds": [
@@ -429,7 +424,7 @@
     },
     {
       "title": "Data rules conflict with lead tracking",
-      "detail": "Member data (commenters, reactors) may not be used to create leads or enrich a CRM, may not be combined with other data, may only be displayed in the app, and social activity data may be stored for 48 hours at most. An Iskaria assistant that turns LinkedIn commenters into clinic leads would be a restricted use case.",
+      "detail": "Member data (commenters, reactors) may not be used to create leads or enrich a CRM, may not be combined with other data, may only be displayed in the app, and social activity data may be stored for 48 hours at most. An assistant that turns LinkedIn commenters into leads would be a restricted use case.",
       "severity": "can-block-launch",
       "workaround": "Keep the LinkedIn use case to publishing and Page analytics. Don't feed member data into lead tracking.",
       "evidence": {
@@ -481,7 +476,7 @@
     "Review times are undocumented. The '10-14 business days' figure is one developer's transcription of the portal dialog (Aug 2026); a GitHub issue guessed '1-5 business days'.",
     "Whether Sign In with LinkedIn can be added to the Community Management app after approval (the FAQ covers only the request time); we assume separate apps.",
     "Whether LinkedIn accepts http://localhost redirect URLs; docs only say to add them via HTTPS.",
-    "Whether a multi-tenant tool (Iskaria posting for several clinics' Pages) needs anything beyond the standard Page Management use case. No test yet: Iskaria has only noted that Community Management needs an approved developer app.",
+    "Whether a multi-tenant tool (one app posting for several customers' Pages) needs anything beyond the standard Page Management use case. Not tested yet; the only first-hand observation is that Community Management needs an approved developer app.",
     "Marketing version 202511 sunsets 2026-11-16; check the current API version header (li-lms-2026-10 is current)."
   ],
   "sources": [

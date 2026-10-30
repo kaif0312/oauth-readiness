@@ -56,7 +56,7 @@
       }
     },
     {
-      "item": "Callback URL for user authorization (https://app.iskaria.com/api/oauth/github/callback from the profile's redirectUris pattern)",
+      "item": "Callback URL for user authorization (your production callback from the profile's redirectUris, with the provider set to github)",
       "profileKey": "redirectUris",
       "requiredFor": "build",
       "evidence": {
@@ -67,7 +67,7 @@
       }
     },
     {
-      "item": "A public HTTPS webhook endpoint and a webhook secret, if the agent should react to issue/PR events. MISSING from the profile: no webhook URL is defined.",
+      "item": "A public HTTPS webhook endpoint and a webhook secret, if the agent should react to issue/PR events. The profile has no webhook URL field, so supply it yourself.",
       "requiredFor": "build",
       "evidence": {
         "status": "sourced",
@@ -88,7 +88,7 @@
       }
     },
     {
-      "item": "App logo (optional for a GitHub App; useful for the install screen and Marketplace). MISSING: the profile has no exported square PNG.",
+      "item": "App logo (optional for a GitHub App; useful for the install screen and Marketplace): a square PNG (profile logo).",
       "profileKey": "logo",
       "requiredFor": "launch",
       "evidence": {
@@ -103,7 +103,7 @@
       "title": "Choose GitHub App over OAuth App",
       "who": "you",
       "phase": "build",
-      "detail": "For an agent that opens issues and PRs on users' repos, register a GitHub App. It gets fine-grained permissions, the installer picks which repositories it can touch, installation tokens expire after 1 hour, and it can act as a bot (e.g. iskaria[bot]) or on behalf of a user via user-to-server tokens. An OAuth App only has broad scopes such as `repo` (all public and private repos of the user) and is blocked by default in new organizations. Pick OAuth App only if you need to act strictly as the user across everything they can access.",
+      "detail": "For an agent that opens issues and PRs on users' repos, register a GitHub App. It gets fine-grained permissions, the installer picks which repositories it can touch, installation tokens expire after 1 hour, and it can act as a bot (e.g. your-app[bot]) or on behalf of a user via user-to-server tokens. An OAuth App only has broad scopes such as `repo` (all public and private repos of the user) and is blocked by default in new organizations. Pick OAuth App only if you need to act strictly as the user across everything they can access.",
       "estimate": "5 min",
       "evidence": {
         "status": "sourced",
@@ -141,12 +141,12 @@
         {
           "label": "GitHub App name",
           "profileKey": "appName",
-          "note": "Max 34 characters, unique across GitHub; 'Iskaria' may be taken, fall back to e.g. 'Iskaria Agent'."
+          "note": "Max 34 characters, unique across GitHub; if your appName is taken, add a suffix (e.g. '<appName> Agent')."
         },
         {
           "label": "Description",
           "profileKey": "appDescription",
-          "note": "Shown to users when they install the app; tailor to useCases.github (opens issues/PRs from voice-note tasks)."
+          "note": "Shown to users when they install the app; tailor it to your GitHub use case (profile useCases.github)."
         },
         {
           "label": "Homepage URL",
@@ -155,7 +155,7 @@
         {
           "label": "Callback URL",
           "profileKey": "redirectUris",
-          "note": "https://app.iskaria.com/api/oauth/github/callback; add the localhost one for development. Multiple callback URLs are allowed."
+          "note": "Your production callback from the profile's redirectUris; add the localhost one for development. Multiple callback URLs are allowed."
         },
         {
           "label": "Expire user authorization tokens",
@@ -187,7 +187,7 @@
       "fields": [
         {
           "label": "Setup URL",
-          "note": "Not in the profile; e.g. https://app.iskaria.com/settings/integrations/github. Skip if user authorization during installation is on."
+          "note": "Not in the profile; e.g. https://<your-app-domain>/settings/integrations/github. Skip if user authorization during installation is on."
         },
         {
           "label": "Redirect on update"
@@ -214,7 +214,7 @@
         },
         {
           "label": "Webhook URL",
-          "note": "MISSING from profile; e.g. https://app.iskaria.com/api/webhooks/github."
+          "note": "Not in the profile; e.g. https://<your-app-domain>/api/webhooks/github."
         },
         {
           "label": "Webhook secret",
@@ -255,7 +255,7 @@
       "title": "Set who can install it and create the app",
       "who": "you",
       "phase": "build",
-      "detail": "'Where can this GitHub App be installed?': 'Only on this account' while testing, 'Any account' to let clinics/users install it. Click Create GitHub App.",
+      "detail": "'Where can this GitHub App be installed?': 'Only on this account' while testing, 'Any account' to let other users and organizations install it. Click Create GitHub App.",
       "estimate": "1 min",
       "fields": [
         {
@@ -317,7 +317,7 @@
   "scopes": [
     {
       "name": "Issues: Read & write",
-      "purpose": "Open issues from voice-note tasks and comment on them",
+      "purpose": "Open issues on the user's repositories and comment on them",
       "tier": "basic",
       "evidence": {
         "status": "sourced",

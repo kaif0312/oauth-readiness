@@ -121,4 +121,4 @@ Deploy: Vercel (Next.js preset). Set `ANTHROPIC_API_KEY`; create a private R2 bu
 - Guides go stale. Each records its access date; there is no automatic re-check yet (a scheduled re-run diffing verdicts would be next).
 - Browser setup is proven for Google (agent-driven, owner saves) and scripted for GitHub (the manifest script was only dry-run
   tested; the live run timed out waiting for sign-in). Other consoles work the same way in principle, but each changes often.
-- One developer profile (Iskaria). Making it editable per visitor is a small step that wasn't needed for the demo.
+- The website shows Iskaria's profile as the worked example. Over MCP any developer passes their own (`get_profile` with `template: true` lists the keys); the website itself has no per-visitor profile yet.

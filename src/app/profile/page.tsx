@@ -25,11 +25,16 @@ export default function ProfilePage() {
   const keys = Object.keys(LABELS);
   return (
     <div className="wrap py-10 max-w-3xl">
-      <h1 className="text-2xl font-semibold">Developer profile: {profile.companyName}</h1>
+      <h1 className="text-2xl font-semibold">Example developer profile: {profile.companyName}</h1>
       <p className="text-muted mt-2 text-sm">
-        Registration and review forms ask for the same things again and again. The guides check each provider&apos;s requirements against this profile, and
-        the setup agent fills forms from it. It holds public facts only: secrets, logins and legal acceptance stay with you. Source:{" "}
-        <span className="mono">src/data/profile/iskaria.json</span>.
+        Registration and review forms ask for the same things again and again. This is {profile.companyName}&apos;s profile, shown as a worked example: the
+        guides check each provider&apos;s requirements against it, and the setup agent fills forms from it. Public facts only: secrets, logins and legal
+        acceptance stay with you.
+      </p>
+      <p className="mt-3 text-sm">
+        <b>Use your own:</b> your agent calls <span className="mono">get_profile</span> with <span className="mono">template: true</span>, fills it from your
+        project, asks you for the rest, and passes it to <span className="mono">get_setup_plan</span>.{" "}
+        <Link className="link" href="/#agent">Connect your agent →</Link>
       </p>
       <div className="panel mt-6 overflow-hidden">
         {keys.map((k) => {
