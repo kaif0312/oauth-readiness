@@ -33,6 +33,9 @@ export const BROWSER_RULES = [
 ];
 
 export function buildPlan(guide: Guide, phases: PlanStep["phase"][], profile?: Json) {
+  // Profile values are templates for every provider (".../api/oauth/{provider}/callback"); fill in this one.
+  const provider = guide.slug.split("-")[0];
+  const fill = (key: string) => profileDisplay(key, profile).replaceAll("{provider}", provider);
   const steps = guide.steps
     .filter((s) => phases.includes(s.phase))
     .map((s, i): PlanStep => ({
@@ -48,7 +51,7 @@ export function buildPlan(guide: Guide, phases: PlanStep["phase"][], profile?: J
         const has = profileHas(f.profileKey, profile);
         return {
           label: f.label,
-          value: has ? profileDisplay(f.profileKey, profile) : null,
+          value: has ? fill(f.profileKey) : null,
           status: has ? "filled" : has === false ? "missing" : "not-in-profile",
           note: f.note,
         };
