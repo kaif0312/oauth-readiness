@@ -75,6 +75,11 @@ verifier agent that was given the guides but not my conclusions.
   - **Slack:** commercially distributed apps that aren't on the Marketplace get `conversations.history` at 1 request/min.
   - **LinkedIn:** the Community Management API needs its own app with no other products.
   - **Google:** Gmail `metadata`/`compose` scopes are restricted, not sensitive.
+- **Independent verification pass:** a separate agent re-checked 23 high-stakes claims against primary sources: 17 confirmed,
+  4 corrected, 2 unverified.
+  - **GitHub:** repo-admin installs are also blocked by the Repository administration permission, and org owners can switch them off.
+  - **Google:** brand verification is usually minutes when the automated check passes; 2-3 business days only on manual review.
+  - **LinkedIn:** every app approved for the Marketing Developer Platform gets 365-day refresh tokens, not just partners.
 - **Not verified:**
   - Real review wait times. These are community reports, labelled `inferred`.
   - Google CASA prices. Taken from assessor price lists, which change.
