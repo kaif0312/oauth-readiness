@@ -1,8 +1,88 @@
 # OAuth Readiness
 
-Guides that tell a developer building an AI agent **how long it really takes to get an OAuth app approved** with a provider, what it
-requires, what can block it, and which steps an agent can do for them. A library of researched guides, plus a live agent that researches any
-other app on request and publishes a shareable guide.
+**How long it really takes to get an OAuth app approved with each provider, what it needs, what can block it, and an agent that sets
+it up for you.** Built for developers whose AI agent has to connect to Gmail, Slack, HubSpot, Meta and the rest.
+
+**Live:** https://oauth-readiness-five.vercel.app · **MCP:** `https://oauth-readiness-five.vercel.app/api/mcp` · **For agents:** [`/llms.txt`](https://oauth-readiness-five.vercel.app/llms.txt)
+
+## Try it in two minutes
+
+**1. Read a guide.** Open [Google (Search Console, GA4, Business Profile)](https://oauth-readiness-five.vercel.app/guides/google-search-analytics).
+The top shows two numbers, **first token** (your own account works: 30 min) and **real users** (after Google's review: 1-3 weeks). Below
+that are the steps, each marked *Agent*, *Agent drafts, you submit* or *You*. Every claim is tagged `tested`, `sourced` or `inferred`,
+and links to its source.
+
+**2. Let your coding agent set it up.** Connect the MCP server:
+
+```sh
+claude mcp add --transport http oauth-readiness https://oauth-readiness-five.vercel.app/api/mcp
+```
+
+(Cursor, VS Code, Codex and Windsurf snippets are on the [site](https://oauth-readiness-five.vercel.app/#agent).) Then ask:
+
+> Set up the Slack OAuth app for this project with the oauth-readiness MCP. Fill the profile from this repo, ask me for anything
+> missing, and walk me through it in my browser.
+
+The agent calls `get_profile {template: true}`, fills the profile from your repo, then calls `get_setup_plan {slug, profile}`. What it
+gets back (real output for a made-up "Acme Assistant", trimmed):
+
+```jsonc
+{
+  "app": "Slack (Slack app, OAuth v2)",
+  "steps": [
+    { "n": 1, "title": "Have the agent write the app manifest", "who": "agent",
+      "action": "DO: the agent can complete this step.",
+      "fields": [
+        { "label": "display_information.name", "value": "Acme Assistant", "status": "filled" },
+        { "label": "display_information.description", "value": null, "status": "missing" },
+        { "label": "oauth_config.redirect_urls", "value": ["https://app.acme.example/api/oauth/slack/callback"], "status": "filled" } ] },
+    { "n": 2, "title": "Create the app from the manifest", "who": "you",
+      "action": "STOP: a human must do this step (sign-in, legal, payment or judgement). Notify them and wait." }
+    // ... 6 steps in all
+  ],
+  "missing": ["display_information.description (step 1, profile key appDescription)", "..."],
+  "scopes": ["chat:write (basic)", "chat:write.public (basic)", "channels:read (basic)"],
+  "credentials": { "env": { "SLACK_CLIENT_ID": "...", "SLACK_CLIENT_SECRET": "the human copies it into .env.local; never into chat" } },
+  "verify": "Done when the developer's own account completes the OAuth flow ... and one API call with the token succeeds."
+}
+```
+
+The agent fills forms in **your** signed-in browser and stops wherever a human has to act: sign-in, accepting terms, paying, the final
+Create/Submit, and handling the client secret. This flow set up a real Google OAuth app for Iskaria end to end
+([details below](#what-i-tested-sourced-or-could-not-verify)).
+
+**3. Research a provider that isn't listed.** Type it on the home page, or open
+[`/generate?q=calendly`](https://oauth-readiness-five.vercel.app/generate?q=calendly). Calendly already has a guide, so it opens at
+once; a new app takes 2-4 minutes and you watch every search, fetch and endpoint probe as it happens.
+
+## How it fits together
+
+```mermaid
+flowchart LR
+  dev([Developer]) --> site[Website: guides + live research]
+  agent([Coding agent]) -->|MCP| mcp["/api/mcp: list_guides, get_profile,<br/>get_setup_plan, get_guide, research_app"]
+  site --> store
+  mcp --> store[(Guides: 8 researched in the repo,<br/>live ones in Cloudflare R2)]
+  research["Research agent (Claude + web search/fetch<br/>+ OAuth endpoint probe)"] -->|zod-validated guide| store
+  site -->|/generate| research
+  mcp -->|research_app| research
+  mcp -->|setup plan + STOP points| browser([Agent drives the dev's own browser])
+```
+
+## Where things live
+
+| Path | What |
+|---|---|
+| `src/lib/guide.ts` | The `Guide` schema (zod). Seeds, the live agent, the pages and the MCP all share it. Every claim carries `evidence` |
+| `src/data/guides/*.json` | The 8 researched guides. `node scripts/validate.ts` checks the schema, source ids and profile-neutral wording |
+| `src/lib/agent.ts`, `src/lib/probe.ts` | Live research agent (research, then structured compose) and the credential-free OAuth endpoint probe |
+| `src/lib/plan.ts`, `src/lib/profile.ts` | A guide plus a developer profile turned into a browser-agent setup plan (fields, STOP points, missing items, env names, verify) |
+| `src/app/api/mcp/route.ts` | MCP server (Streamable HTTP, no auth) |
+| `src/lib/install.ts` | Install snippets per client, the agent prompt, `/llms.txt` |
+| `src/lib/store.ts`, `src/lib/r2.ts` | Storage: seeds from disk, live guides in a private R2 bucket (S3 API, SigV4, no SDK), local `.data/` in dev |
+| `src/app/` | Pages: home, `/guides/[slug]`, `/generate`, `/method` (all evidence in one place), `/profile` |
+| `scripts/` | `validate.ts`, `probe.ts`, `setup-github.ts` (GitHub App Manifest flow), `push-live.ts` |
+| `docs/research-brief.md` | The brief the research agents followed |
 
 ## The problem, as I understood it
 
@@ -30,11 +110,9 @@ two numbers: **first token** (hands-on time to your own working connection) and 
   missing: "Google needs a Limited Use section in your privacy policy; Iskaria's has none." The profile is my own company, Iskaria, a
   clinic-operations console with an AI assistant. Using a real company means the gaps are real, and we have actually set up Google and Meta
   for it.
-- **MCP server** (`/api/mcp`, Streamable HTTP, no auth): the same guides for agents. Tools: `list_guides`, `get_guide`,
-  `get_setup_plan` (a guide turned into browser-agent instructions: each form field resolved to a profile value or marked missing,
-  and STOP points where the human signs in, pays or submits; pass your own `profile` to personalise), `get_profile`, and
-  `research_app` (runs the live agent). Add it to Claude Code with
-  `claude mcp add --transport http oauth-readiness https://oauth-readiness-five.vercel.app/api/mcp`.
+- **MCP server** (`/api/mcp`, Streamable HTTP, no auth): the same guides for agents. `list_guides`, `get_profile` (`template: true`
+  gives the keys registration forms ask for), `get_setup_plan` (a guide turned into browser-agent steps for *your* profile),
+  `get_guide` (the full research) and `research_app` (runs the live agent: slow, paid, capped per day). See "Try it" above.
 - **Setup agent** (`scripts/setup-github.ts`): registers a real GitHub App from the profile via GitHub's App Manifest flow. The agent does
   everything except sign-in and the final "Create" click. At each handoff it notifies you (terminal bell, phone push via ntfy, or any chat
   webhook), then receives the credentials and saves them to `.secrets/`.

@@ -28,7 +28,7 @@ app takes to get approved, what it needs, what can block it, and which steps an 
   (done for Google on 2026-10-30, see below).
 
 Repo `github.com/kaif0312/oauth-readiness`, branch `main`. **A push to `main` deploys production** (Vercel Git integration).
-Assignment brief and scope: the first message of the original session; deliverables are the live link, this repo and README.
+Deliverables: the live link, this repo and README.
 
 ## Code map
 
@@ -57,13 +57,10 @@ in `.auth/` once made every CLI deploy fail silently with EBUSY).
 ## State and open problems (in priority order)
 
 1. **Live guides moved to Cloudflare R2 (2026-10-30).** Vercel Blob (Hobby) blocked the store over quota (every read 403),
-   so live guides now go to the PRIVATE R2 bucket `oauth-readiness-guides` (Cloudflare login iskaria.team@gmail.com,
-   "Iskaria.team@gmail.com's Account"; the bucket sits next to Iskaria's `iskaria-sign`). Token "oauth-readiness-guides RW":
-   Object Read & Write on that bucket only, no expiry. Env `R2_*` set in Vercel Production + Preview and `.env.local`.
-   calendly and xero were re-pushed from `.data/guides`; **notion and zoom are lost** unless the Blob store is unblocked
-   (`BLOB_READ_WRITE_TOKEN` is kept in Vercel for that reason only, the code no longer reads it): regenerate them instead.
-   Cloudflare's dashboard API answers reads with the session cookie but its firewall 403s scripted writes; use the UI.
-   The secret was moved via the page's "Click to copy" + `Get-Clipboard` into `.env.local`, never printed.
+   so live guides now go to the PRIVATE R2 bucket `oauth-readiness-guides`, with an API token limited to Object Read & Write
+   on that bucket. Env `R2_*` set in Vercel Production + Preview and `.env.local`. calendly and xero were re-pushed from
+   `.data/guides`; **notion and zoom were lost** with the Blob store: regenerate them. Account details: `AGENTS.local.md`
+   (git-ignored, owner's machine only).
 2. **Xero live guide contradicts itself** (summary says 5 connections, verification says 25). The compose prompt now forbids
    that; regenerate xero, then push with `node --env-file=.env.local scripts/push-live.ts xero`.
 3. 8 guides, not 100. The scale path: batch `research_app` runs + a human review queue; seeds were researched by parallel
@@ -77,25 +74,19 @@ in `.auth/` once made every CLI deploy fail silently with EBUSY).
    sources/meta/evidence notes). Not done: `research_app` is still synchronous with no progress notifications (clients with a
    ~60 s tool timeout give up; an async job + `get_research_status` is the fix) and unauthenticated (shared daily cap);
    evidence chips still use `title` tooltips (invisible on touch).
-6. The folder sits on the Desktop root; the workspace map (`~/.claude/scripts/workspace.md`) says non-Iskaria projects go in
-   `Desktop/Projects/<name>`. Move it when nothing runs from it (the `.vercel` link moves with the folder).
-7. The assignment named a company ("APM Integrations"); never confirmed what they are. If the owner shares a link, match the
-   README framing to it.
 
 ## Google end to end (the proof case, 2026-10-30)
 
 Claude Code fetched `get_setup_plan("google-search-analytics")` from production MCP and filled Google Auth Platform for
-Iskaria's project `dr-jefna-gbp` in the owner's Chrome (Gmail profile, Claude in Chrome deviceId `c3b434b0-...`; the other
-profile `96427a42-...` is ibrahim@iskaria.com and asks for a password on the Cloud console). Then "Connect Google" in the
-Iskaria console read live Business Profile, Search Console and GA4 data. Detail lives in the Iskaria app repo:
-`Desktop/Iskaria/app/docs/agents/google-connect-seo.md` and `docs/google/oauth-verification-submission.md`.
+Iskaria's Google Cloud project in the owner's signed-in Chrome (Claude in Chrome). Then "Connect Google" in the Iskaria console
+read live Business Profile, Search Console and GA4 data. Project and browser-profile details: `AGENTS.local.md`.
 
 Lessons (all in the Google guide and `plan.ts` already):
 - `business.manage` and `webmasters.readonly` are non-sensitive; only `analytics.readonly` needs verification.
 - User support email = the signed-in account or a Google Group it manages.
 - New client option "Use this client for an AI-powered agent"; Google wants separate clients for agent and normal flows.
 - Unsaved console forms vanish on navigation; one "saved" Branding page kept only the domain. Reload and read back.
-- The logo upload input is hidden: set it with a DataTransfer in `javascript_tool` (file_upload had no ref to target).
+- The logo upload input is hidden: a browser agent has to set the file input from script.
 - Brand verification is automatic (passed in about 2 minutes), then "Publish branding".
 - The extension may not act on accounts.google.com: sign-in and consent are always the human's.
 

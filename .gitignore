@@ -49,3 +49,6 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# owner-only notes (accounts, machine details)
+*.local.md
