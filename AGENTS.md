@@ -58,12 +58,12 @@ in `.auth/` once made every CLI deploy fail silently with EBUSY).
 
 1. **Live guides moved to Cloudflare R2 (2026-10-30).** Vercel Blob (Hobby) blocked the store over quota (every read 403),
    so live guides now go to the PRIVATE R2 bucket `oauth-readiness-guides`, with an API token limited to Object Read & Write
-   on that bucket. Env `R2_*` set in Vercel Production + Preview and `.env.local`. calendly and xero were re-pushed from
-   `.data/guides`; **notion and zoom were lost** with the Blob store: regenerate them. Account details: `AGENTS.local.md`
+   on that bucket. Env `R2_*` set in Vercel Production + Preview and `.env.local`. The 4 live guides (calendly, notion,
+   xero, zoom) are in R2. Account details: `AGENTS.local.md`
    (git-ignored, owner's machine only).
 2. **Live guides are neutral (2026-11-01).** The live agent no longer sees the Iskaria profile: it writes for any developer,
    and `ownerLeaks()` (`guide.ts`, shared with `validate.ts`) sends Iskaria/clinic wording back for one rewrite round.
-   xero was regenerated with it (no leaks, 5/50 connection tiers consistent). calendly predates the fix: regenerate it.
+   calendly, notion, zoom and xero were regenerated on production with it (0 leaks; xero's 5/50 connection tiers consistent).
    Local `next dev` with `.env.local` writes to the production R2 bucket.
 3. 8 guides, not 100. The scale path: batch `research_app` runs + a human review queue; seeds were researched by parallel
    agents following `docs/research-brief.md`, then checked by a separate verifier.
