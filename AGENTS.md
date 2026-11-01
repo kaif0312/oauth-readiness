@@ -61,8 +61,10 @@ in `.auth/` once made every CLI deploy fail silently with EBUSY).
    on that bucket. Env `R2_*` set in Vercel Production + Preview and `.env.local`. calendly and xero were re-pushed from
    `.data/guides`; **notion and zoom were lost** with the Blob store: regenerate them. Account details: `AGENTS.local.md`
    (git-ignored, owner's machine only).
-2. **Xero live guide contradicts itself** (summary says 5 connections, verification says 25). The compose prompt now forbids
-   that; regenerate xero, then push with `node --env-file=.env.local scripts/push-live.ts xero`.
+2. **Live guides are neutral (2026-11-01).** The live agent no longer sees the Iskaria profile: it writes for any developer,
+   and `ownerLeaks()` (`guide.ts`, shared with `validate.ts`) sends Iskaria/clinic wording back for one rewrite round.
+   xero was regenerated with it (no leaks, 5/50 connection tiers consistent). calendly predates the fix: regenerate it.
+   Local `next dev` with `.env.local` writes to the production R2 bucket.
 3. 8 guides, not 100. The scale path: batch `research_app` runs + a human review queue; seeds were researched by parallel
    agents following `docs/research-brief.md`, then checked by a separate verifier.
 4. Save the Google console flow to the browser-flows library (`~/.claude/scripts/browser-flows/`, see the `browser-fast`

@@ -2,25 +2,12 @@
 // Usage: node scripts/validate.ts [file...]   (default: every file in src/data/guides)
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { Guide } from "../src/lib/guide.ts";
+import { Guide, ownerLeaks } from "../src/lib/guide.ts";
 
 const dir = "src/data/guides";
 const files = process.argv.slice(2).length
   ? process.argv.slice(2)
   : readdirSync(dir).filter((f) => f.endsWith(".json")).map((f) => join(dir, f));
-
-const OWNER = /iskaria|clinic/i;
-function ownerLeaks(value: unknown, path: (string | number)[] = []): string[] {
-  if (path[0] === "sources" || path[0] === "meta") return [];
-  if (typeof value === "string") {
-    const isEvidenceNote = path.at(-1) === "note" && path.at(-2) === "evidence";
-    return !isEvidenceNote && OWNER.test(value) ? [`${path.join(".")}: ${value.slice(0, 120)}`] : [];
-  }
-  if (Array.isArray(value)) return value.flatMap((v, i) => ownerLeaks(v, [...path, i]));
-  if (value && typeof value === "object")
-    return Object.entries(value).flatMap(([k, v]) => ownerLeaks(v, [...path, k]));
-  return [];
-}
 
 let failed = 0;
 for (const file of files) {

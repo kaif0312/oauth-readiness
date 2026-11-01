@@ -122,3 +122,17 @@ export const Guide = z.object({
 export type Guide = z.infer<typeof Guide>;
 export type Evidence = z.infer<typeof Evidence>;
 export type Step = z.infer<typeof Step>;
+
+// Guides must read correctly for any developer: no owner (Iskaria/clinic) situation baked into the guidance.
+// Allowed only as evidence of a real test: inside sources, meta and evidence.note. Used by validate.ts and the live agent.
+const OWNER = /iskaria|clinic/i;
+export function ownerLeaks(value: unknown, path: (string | number)[] = []): string[] {
+  if (path[0] === "sources" || path[0] === "meta") return [];
+  if (typeof value === "string") {
+    const isEvidenceNote = path.at(-1) === "note" && path.at(-2) === "evidence";
+    return !isEvidenceNote && OWNER.test(value) ? [`${path.join(".")}: ${value.slice(0, 120)}`] : [];
+  }
+  if (Array.isArray(value)) return value.flatMap((v, i) => ownerLeaks(v, [...path, i]));
+  if (value && typeof value === "object") return Object.entries(value).flatMap(([k, v]) => ownerLeaks(v, [...path, k]));
+  return [];
+}

@@ -1,8 +1,8 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
-import { Guide } from "./guide";
+import { Guide, ownerLeaks } from "./guide";
 import { probeOAuth, type ProbeInput } from "./probe";
-import profile from "@/data/profile/iskaria.json";
+import { PROFILE_FIELDS } from "./profile";
 
 // Live guide generation: research (web search + fetch + a real OAuth probe) -> compose (schema-constrained) -> validate.
 
@@ -22,8 +22,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 
 const RESEARCH_SYSTEM = `You research how a developer sets up an OAuth app with a provider and gets it approved, so their AI agent's users can connect that provider.
 
-The developer is described by this profile (use its useCases to pick scopes; notice what it lacks):
-${JSON.stringify(profile, null, 2)}
+The guide is for ANY developer building an AI agent that acts on its users' own data in this app (reads it, drafts or sends on their behalf). Pick the scopes such an agent typically needs. Do not assume a company, industry or region.
 
 Find out, from the provider's own documentation wherever possible:
 1. Whether the provider supports OAuth for third-party apps at all (if not: what the alternative is, e.g. API keys, partner program).
@@ -45,7 +44,8 @@ const COMPOSE_SYSTEM = `You turn an OAuth research dossier into a guide that mat
 Rules:
 - Use only facts in the dossier. Every evidence.sourceIds entry must be an id from sources[]. Only URLs from the dossier.
 - evidence.status: "tested" only for the probe_oauth result (add a source of kind "our-test" for it, url = the probed URL); "sourced" when an official page in the dossier says it; otherwise "inferred".
-- Personalise for the developer profile: set profileKey on fields/prerequisites the profile answers (keys: ${Object.keys(profile).filter((k) => !k.startsWith("_")).join(", ")}); add a prerequisite or blocker for each requirement the profile is missing (null values).
+- Write for any developer building an AI agent: never name a specific company, product, domain, industry or region of the developer. Use placeholders such as https://your-app.example/api/oauth/{provider}/callback.
+- Set profileKey on fields/prerequisites a developer profile answers, so a setup agent can fill them later (keys: ${Object.keys(PROFILE_FIELDS).join(", ")}). List every requirement (privacy policy, demo video, verified domain, legal entity...) as a prerequisite.
 - steps: 5-12, in order, phase build -> test -> launch, who = agent | you | agent-then-you. Logins, legal acceptance, payment, identity/business verification and final "Submit for review" are "you". Drafting texts, manifests, scope justifications, privacy-policy sections and demo scripts are "agent-then-you".
 - When sources disagree (e.g. a blog vs the provider's docs), the provider's docs win in summary and verdict; put the conflict in uncertainties. Never state a figure in the summary that the verification list contradicts.
 - If the probe found a registration_endpoint (dynamic client registration, common on MCP servers), add an "info" blocker saying an agent may be able to register a client itself with no manual app, and on which surface (e.g. the MCP server but not the REST API).
@@ -166,7 +166,7 @@ export async function generateGuide(query: string, slug: string, emit: (e: Agent
   const compose: Anthropic.MessageParam[] = [
     {
       role: "user",
-      content: `slug: ${slug}\nApp requested: ${query}\n\nDeveloper profile:\n${JSON.stringify(profile)}\n\nResearch dossier:\n${dossier}`,
+      content: `slug: ${slug}\nApp requested: ${query}\n\nResearch dossier:\n${dossier}`,
     },
   ];
   let guide: Guide | null = null;
@@ -192,14 +192,18 @@ export async function generateGuide(query: string, slug: string, emit: (e: Agent
     let problem = "";
     try {
       const parsed = Guide.safeParse({ ...JSON.parse(json), slug });
-      if (parsed.success) guide = parsed.data;
-      else problem = parsed.error.issues.slice(0, 15).map((i) => `${i.path.join(".")}: ${i.message}`).join("\n");
+      if (parsed.success) {
+        // Owner wording gets one rewrite round; a schema-valid guide is never thrown away over it.
+        const leaks = ownerLeaks(parsed.data);
+        if (!leaks.length || attempt === 1) guide = parsed.data;
+        else problem = `Developer-specific wording; rewrite these for any developer:\n${leaks.slice(0, 15).join("\n")}`;
+      } else problem = parsed.error.issues.slice(0, 15).map((i) => `${i.path.join(".")}: ${i.message}`).join("\n");
     } catch (e) {
       problem = `invalid JSON: ${(e as Error).message}`;
     }
     if (!guide) {
       if (attempt === 1) throw new Error(`Guide did not match the schema: ${problem.split("\n")[0]}`);
-      emit({ type: "phase", phase: "compose", text: "Fixing schema issues" });
+      emit({ type: "phase", phase: "compose", text: "Fixing issues" });
       compose.push({ role: "assistant", content: res.content }, { role: "user", content: `That JSON fails validation:\n${problem}\nReturn the complete corrected JSON object only.` });
     }
   }
