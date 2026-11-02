@@ -60,7 +60,7 @@ const handler = createMcpHandler(
       {
         title: "Get a setup plan for a browser agent",
         description:
-          "Use this when a developer asks to set up / register / create an OAuth app for a provider (e.g. 'set up Slack OAuth for my app'). Returns ordered steps for an agent driving the developer's own signed-in browser: each console form field filled from the developer's profile (or listed under `missing`), STOP points where the human signs in, accepts terms, pays or submits, the scopes to request, env var names for the credentials, and how to verify it works. Pass the developer's own `profile` (call get_profile with template: true for the keys; ask the developer for missing values, never invent them). Without a profile the plan is filled with Iskaria's example data. ~1.5-3k tokens.",
+          "Use this when a developer asks to set up / register / create an OAuth app for a provider (e.g. 'set up Slack OAuth for my app'). Returns ordered steps for an agent driving the developer's own signed-in browser: each console form field filled from the developer's profile (or listed under `missing`), STOP points where the human signs in, accepts terms, pays or submits, the scopes to request, env var names for the credentials, and and `verify`: a ready authorize URL plus `verifyScript`, a self-contained Node 20+ script (no deps) to write to a scratch file and run in the developer's repo; the human approves in the browser and it prints only success/failure, granted scopes, token type, expiry, refresh-token presence and the test call's HTTP status (never tokens or secrets). `oauth` gives the authorize/token URLs, PKCE, client auth and refresh behaviour. Pass the developer's own `profile` (call get_profile with template: true for the keys; ask the developer for missing values, never invent them). Without a profile NOTHING is filled: every profile-backed field is `missing` and `next` tells you what to do. Pass example: true only for a worked example with Iskaria's data (never type it into a real console). ~1.5-3k tokens (verifyScript is ~0.7k; verifyScript: false omits it).",
         inputSchema: z.object({
           slug: z.string().describe("slug from list_guides, e.g. slack; names like 'Gmail' also work"),
           phases: z
@@ -72,9 +72,11 @@ const handler = createMcpHandler(
             .optional()
             .describe("the developer's profile: {appName, homepageUrl, privacyPolicyUrl, supportEmail, authorizedDomains[], redirectUris[] (use {provider} as a placeholder), ...}; see get_profile with template: true"),
           compact: z.boolean().optional().describe("drop the evidence detail from the verdict (smaller)"),
+          example: z.boolean().optional().describe("no profile: fill the plan with Iskaria's example data instead of leaving fields missing. Only to show a worked example; never use those values for a real developer"),
+          verifyScript: z.boolean().optional().describe("include the verification script in verify (default true); false for a smaller plan"),
         }),
       },
-      async ({ slug, phases, profile: custom, compact }) => {
+      async ({ slug, phases, profile: custom, compact, example, verifyScript }) => {
         const g = await getGuide(slug);
         if (!g) return unknown(slug);
         let p;
@@ -83,7 +85,7 @@ const handler = createMcpHandler(
         } catch (e) {
           return fail(`profile is not valid JSON: ${(e as Error).message}`);
         }
-        return json(buildPlan(g, phases ?? ["build", "test"], p, { compact }));
+        return json(buildPlan(g, phases ?? ["build", "test"], p, { compact, example, verifyScript }));
       },
     );
 
@@ -92,7 +94,7 @@ const handler = createMcpHandler(
       {
         title: "Get the profile template",
         description:
-          "With template: true (recommended), the keys a setup plan fills console forms from (app name, URLs, support email, redirect URIs...), which are required, and an example: fill it from the developer's project (package.json, site, README) and ask them for the rest. Without it, Iskaria's real profile as a worked example.",
+          "With template: true (recommended), the keys a setup plan fills console forms from (app name, URLs, support email, redirect URIs...), which are required, and an example: fill it from the developer's project (package.json, site, README) and ask them for the rest. Without it, Iskaria's real profile as a worked example (get_setup_plan never uses it unless you pass example: true).",
         inputSchema: z.object({ template: z.boolean().optional().describe("true: empty template with field descriptions; false/absent: Iskaria's example profile") }),
       },
       async ({ template }) => json(template ? profileTemplate() : profile),

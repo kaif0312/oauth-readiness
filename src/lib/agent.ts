@@ -31,6 +31,7 @@ Find out, from the provider's own documentation wherever possible:
 4. What review or approval stands between test and real users: name of the process, requirements (privacy policy, demo video, security assessment, business verification, partner tier, paid plan), cost, and realistic wait time.
 5. The scopes an agent integration typically needs and which of them trigger extra review.
 6. Nuances that block people: recent policy changes (2025-2026), rate limits for unreviewed apps, org-admin approval, regional limits.
+7. The OAuth mechanics, from the docs (the probe confirms some): authorize URL, token URL, revoke URL; PKCE (required / supported / unsupported); how the token endpoint wants client credentials (secret in the body, HTTP Basic, or none); scope separator (space or comma); extra authorize params needed for a refresh token (e.g. access_type=offline&prompt=consent, token_access_type=offline, an offline_access scope); whether refresh tokens exist and rotate; one cheap authenticated GET that proves a token works (a /me or auth.test style endpoint); the console page URL for each registration step (deep links where the console has them). If the provider has no OAuth for third parties (API keys only), say so and describe how the key is created.
 
 Method (you have about two minutes, so batch your calls: one round of parallel searches, one round of parallel fetches, the probe, a short re-check, then write):
 - Search, then FETCH the key official pages; quote them. Prefer docs over blogs. Note page dates where shown.
@@ -38,7 +39,7 @@ Method (you have about two minutes, so batch your calls: one round of parallel s
 - Re-check the 2-4 most decision-relevant claims (review requirement, wait time, user cap) against a second page. Record whether they held up.
 - Be honest about gaps: review wait times are usually anecdotal; say so.
 
-Finish with a research dossier in plain text with these headings: FINDINGS (each line: claim | evidence: tested/sourced/inferred | source URL | short verbatim quote), PROBE RESULT, VERIFICATION (claim | method | confirmed/corrected/unverified), UNCERTAINTIES, SOURCES (url | title | kind). Keep it dense; no preamble. Today is ${today()}.`;
+Finish with a research dossier in plain text with these headings: FINDINGS (each line: claim | evidence: tested/sourced/inferred | source URL | short verbatim quote), OAUTH MECHANICS (item 7, one line per fact with source URL), PROBE RESULT, VERIFICATION (claim | method | confirmed/corrected/unverified), UNCERTAINTIES, SOURCES (url | title | kind). Keep it dense; no preamble. Today is ${today()}.`;
 
 const COMPOSE_SYSTEM = `You turn an OAuth research dossier into a guide that matches the given JSON schema exactly.
 Rules:
@@ -49,6 +50,8 @@ Rules:
 - steps: 5-12, in order, phase build -> test -> launch, who = agent | you | agent-then-you. Logins, legal acceptance, payment, identity/business verification and final "Submit for review" are "you". Drafting texts, manifests, scope justifications, privacy-policy sections and demo scripts are "agent-then-you".
 - When sources disagree (e.g. a blog vs the provider's docs), the provider's docs win in summary and verdict; put the conflict in uncertainties. Never state a figure in the summary that the verification list contradicts.
 - If the probe found a registration_endpoint (dynamic client registration, common on MCP servers), add an "info" blocker saying an agent may be able to register a client itself with no manual app, and on which surface (e.g. the MCP server but not the REST API).
+- Fill "oauth" from the dossier's OAUTH MECHANICS and the raw probe metadata (the probe's authorization_endpoint, token_endpoint, revocation_endpoint, code_challenge_methods_supported, token_endpoint_auth_methods_supported and registration_endpoint beat anything else). Use "unknown" for pkce/clientAuth when neither probe nor docs say; never guess an endpoint. authType "api-key" when the provider has no OAuth for third parties (omit the URLs; steps describe creating the key). oauth.evidence is "tested" only if the probe supplied the endpoints; scopeSeparator only if not a space; testApiCall must be a cheap read-only call the scopes in scopes[] allow.
+- Set "url" on every step whose console page is known from the dossier (deep link to the exact page where possible, never invented).
 - verdict.timeToLaunch is calendar time including review waits. summary: 2-3 plain sentences a developer can forward.
 - meta.generatedBy = "live-agent", meta.generatedAt = "${today()}", sources[].accessed = "${today()}".
 Output ONLY one JSON object (no prose, no code fences) valid against this JSON Schema:
@@ -89,6 +92,7 @@ export async function generateGuide(query: string, slug: string, emit: (e: Agent
   ];
   let dossier = "";
   const seen = new Set<string>();
+  const probes: string[] = [];
   const t0 = Date.now();
   let wrapUp = false;
   for (let turn = 0; turn < 12; turn++) {
@@ -143,6 +147,7 @@ export async function generateGuide(query: string, slug: string, emit: (e: Agent
           authorizeUrl: typeof raw.authorizeUrl === "string" && raw.authorizeUrl ? raw.authorizeUrl : undefined,
         };
         const out = await probeOAuth(input);
+        probes.push(JSON.stringify({ discovery: out.discovery.filter((d) => d.found).map((d) => ({ url: d.url, metadata: d.metadata })), authorizeStatus: out.authorize?.status }));
         const found = out.discovery.filter((d) => d.found).map((d) => d.url);
         emit({
           type: "probe",
@@ -166,7 +171,7 @@ export async function generateGuide(query: string, slug: string, emit: (e: Agent
   const compose: Anthropic.MessageParam[] = [
     {
       role: "user",
-      content: `slug: ${slug}\nApp requested: ${query}\n\nResearch dossier:\n${dossier}`,
+      content: `slug: ${slug}\nApp requested: ${query}\n\nResearch dossier:\n${dossier}${probes.length ? `\n\nRaw probe_oauth metadata (real responses):\n${probes.join("\n")}` : ""}`,
     },
   ];
   let guide: Guide | null = null;

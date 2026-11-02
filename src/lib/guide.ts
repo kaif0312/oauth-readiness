@@ -62,6 +62,26 @@ export const Blocker = z.object({
   evidence: Evidence,
 });
 
+// The facts a developer's code needs to run the OAuth flow, so a setup plan can also verify the app end to end.
+// Optional: guides written before this field existed (live guides in R2) still parse.
+export const OAuthInfo = z.object({
+  authType: z.enum(["oauth2", "oauth2-pkce-only", "api-key", "other"]).describe("api-key = the provider has no OAuth for third parties; the steps then describe creating a key"),
+  authorizeUrl: z.string().optional().describe("authorization endpoint, https"),
+  tokenUrl: z.string().optional().describe("token endpoint, https"),
+  revokeUrl: z.string().optional(),
+  pkce: z.enum(["required", "supported", "unsupported", "unknown"]),
+  clientAuth: z.enum(["client_secret_post", "client_secret_basic", "none", "unknown"]).describe("how the token endpoint wants the client credentials"),
+  scopeSeparator: z.enum([" ", ","]).optional().describe("default is a space"),
+  extraAuthorizeParams: z.record(z.string(), z.string()).optional().describe("e.g. {access_type:'offline', prompt:'consent'} or {token_access_type:'offline'}"),
+  refreshTokens: z.string().describe("short, e.g. 'yes, rotating; offline scope needed'"),
+  testApiCall: z
+    .object({ method: z.enum(["GET", "POST"]), url: z.string(), note: z.string().optional() })
+    .optional()
+    .describe("one cheap call that proves the token works, e.g. a /me endpoint"),
+  dynamicRegistration: z.boolean().optional(),
+  evidence: Evidence,
+});
+
 export const Guide = z.object({
   slug: z.string(),
   app: z.string().describe("provider/app name, e.g. Google (Gmail API)"),
@@ -94,6 +114,7 @@ export const Guide = z.object({
       }),
     )
     .describe("accounts, URLs, assets and verifications the provider requires"),
+  oauth: OAuthInfo.optional(),
   steps: z.array(Step),
   scopes: z.array(Scope).describe("the scopes a typical agent integration needs, with review tier"),
   blockers: z.array(Blocker).describe("nuances that can delay or block approval"),
@@ -121,6 +142,7 @@ export const Guide = z.object({
 
 export type Guide = z.infer<typeof Guide>;
 export type Evidence = z.infer<typeof Evidence>;
+export type OAuthInfo = z.infer<typeof OAuthInfo>;
 export type Step = z.infer<typeof Step>;
 
 // Guides must read correctly for any developer: no owner (Iskaria/clinic) situation baked into the guidance.
