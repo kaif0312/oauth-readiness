@@ -22,7 +22,7 @@ const hmac = (key: Buffer | string, data: string) => createHmac("sha256", key).u
 // RFC 3986 encoding, as SigV4 wants it in the canonical query string.
 const enc = (s: string) => encodeURIComponent(s).replace(/[!'()*]/g, (ch) => `%${ch.charCodeAt(0).toString(16).toUpperCase()}`);
 
-function safeKey(key: string): string {
+export function safeKey(key: string): string {
   if (!/^[a-z0-9/_.-]+$/.test(key) || key.includes("..") || key.startsWith("/")) throw new Error(`bad storage key: ${key}`);
   return key;
 }

@@ -9,6 +9,7 @@ import { Difficulty, EvidenceTag, WhoTag } from "@/components/bits";
 import { PrintButton } from "@/components/print-button";
 import { AgentPanel } from "@/components/agent-panel";
 import { INSTALLS, agentPrompt } from "@/lib/install";
+import { recentReports } from "@/lib/feedback";
 
 export async function generateMetadata({ params }: PageProps<"/guides/[slug]">): Promise<Metadata> {
   const { slug } = await params;
@@ -77,6 +78,7 @@ export default async function GuidePage({ params }: PageProps<"/guides/[slug]">)
   const { slug } = await params;
   const g = await getGuide(slug);
   if (!g) notFound();
+  const reports = await recentReports(g.slug, 5).catch(() => ({ count: 0, recent: [] }));
   const v = g.verdict;
 
   return (
@@ -288,6 +290,26 @@ export default async function GuidePage({ params }: PageProps<"/guides/[slug]">)
           ))}
         </ol>
       </Section>
+
+      {reports.count > 0 && (
+        <Section title="Reports from setup agents" id="reports">
+          <p className="text-xs text-muted mb-2">
+            {reports.count} report{reports.count === 1 ? "" : "s"} sent by agents that followed this guide; the latest {reports.recent.length} below.
+          </p>
+          <ul className="space-y-2 text-sm">
+            {reports.recent.map((r, i) => (
+              <li key={i} className="panel p-3">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
+                  <span className={`ev ${r.kind === "worked" ? "ev-tested" : "ev-inferred"}`}>{r.kind}</span>
+                  {r.step !== undefined && <span>step {r.step}</span>}
+                  <span>{r.at.slice(0, 10)}</span>
+                </div>
+                <p className="mt-1 whitespace-pre-wrap break-words">{r.text}</p>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
 
       <div className="mt-10 text-xs text-muted no-print">
         Something wrong or outdated? <Link className="link" href={`/generate?q=${encodeURIComponent(g.app)}&force=1`}>Re-run the agent for {g.app}</Link>

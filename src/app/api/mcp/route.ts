@@ -1,9 +1,10 @@
 import { createMcpHandler } from "mcp-handler";
 import { z } from "zod";
-import { generateGuide } from "@/lib/agent";
 import { buildPlan } from "@/lib/plan";
 import { parseProfile, profile, profileTemplate } from "@/lib/profile";
-import { getGuide, liveGuides, normalizeSlug, saveGuide, seedGuides, slugify, takeGenerationSlot } from "@/lib/store";
+import { getGuide, liveGuides, normalizeSlug, resolveSlug, seedGuides, slugify } from "@/lib/store";
+import { readJob, startJob, type Job } from "@/lib/jobs";
+import { MAX_TEXT, REPORT_KINDS, submitReport } from "@/lib/feedback";
 import { installHtml } from "@/lib/install";
 
 export const maxDuration = 300;
@@ -13,8 +14,18 @@ const json = (data: unknown) => ({ content: [{ type: "text" as const, text: JSON
 const fail = (text: string) => ({ content: [{ type: "text" as const, text }], isError: true });
 const unknown = async (slug: string) => {
   const slugs = [...seedGuides(), ...(await liveGuides())].map((g) => g.slug).join(", ");
-  return fail(`No guide '${slug}'. Known slugs: ${slugs}. For another provider call research_app (slow and paid), or tell the developer.`);
+  return fail(`No guide '${slug}'. Known slugs: ${slugs}. For another provider call research_app (runs 2-4 min in the background, paid), or tell the developer.`);
 };
+
+const jobView = (j: Job) => ({
+  slug: j.slug,
+  status: j.status,
+  step: j.step,
+  progress: j.counts,
+  startedAt: j.startedAt,
+  updatedAt: j.updatedAt,
+  ...(j.error ? { error: j.error } : {}),
+});
 
 const handler = createMcpHandler(
   (server) => {
@@ -105,18 +116,78 @@ const handler = createMcpHandler(
       {
         title: "Research a new provider",
         description:
-          "Only when list_guides has no guide for the provider. Runs a research agent on an app name or website and publishes a new guide. SLOW (2-4 minutes; the call blocks, and a client with a short tool timeout may give up: then call get_guide with the slug a few minutes later), costs real API money, and shares a site-wide daily cap, so ask the developer first. Returns the existing guide if there is one, unless force is true. Then call get_setup_plan with the returned slug.",
-        inputSchema: z.object({ query: z.string().min(2).max(120), force: z.boolean().optional() }),
+          "Only when list_guides has no guide for the provider. Starts a research agent on an app name or website that publishes a new guide. Returns AT ONCE with status 'running' (the research takes 2-4 minutes in the background and costs real API money with a site-wide daily cap, so ask the developer first). Then call get_research_status with the slug every 20-30 seconds until it says done, and call get_setup_plan with that slug. Returns the existing guide if there is one (names like 'HubSpot CRM' or 'Microsoft Outlook' resolve to existing guides); if the name is close to several guides (e.g. 'Google Drive') it returns the candidates: pick one of their slugs, or pass force: true to research it as new. If a run for the same provider is already going, that run is returned and no second one is started.",
+        inputSchema: z.object({ query: z.string().min(2).max(120), force: z.boolean().optional().describe("research as a new provider even if a similar guide exists") }),
       },
       async ({ query, force }) => {
-        const slug = force ? slugify(query) : normalizeSlug(query);
-        if (!slug) return fail("Could not make a slug from that name.");
-        const existing = force ? null : await getGuide(slug);
-        if (existing) return json({ slug, url: `${SITE}/guides/${slug}`, existing: true, summary: existing.summary });
-        if (!(await takeGenerationSlot())) return fail("Today's limit of live generations is used up.");
-        const guide = await generateGuide(query.trim(), slug, () => {});
-        await saveGuide(guide);
-        return json({ slug, url: `${SITE}/guides/${slug}`, summary: guide.summary, verdict: guide.verdict });
+        const q = query.trim();
+        const slug = force ? slugify(q) : undefined;
+        let target = slug;
+        if (!force) {
+          const r = await resolveSlug(q);
+          if (r.kind === "exact" && r.slug) {
+            const existing = await getGuide(r.slug);
+            if (existing) return json({ slug: r.slug, url: `${SITE}/guides/${r.slug}`, existing: true, summary: existing.summary, next: "call get_setup_plan with this slug" });
+          }
+          if (r.kind === "close" || r.kind === "ambiguous") {
+            return json({
+              status: "needs_choice",
+              message: `'${q}' is close to existing guide(s) but not clearly the same provider. Use one of these slugs with get_setup_plan, or call research_app again with force: true to research '${q}' as new.`,
+              candidates: r.candidates,
+            });
+          }
+          target = normalizeSlug(q);
+        }
+        if (!target) return fail("Could not make a slug from that name.");
+        const started = await startJob(q, target);
+        if (!started.started && started.reason === "limit") return fail("Today's limit of live generations is used up.");
+        return json({ ...jobView(started.job), alreadyRunning: !started.started, pollWith: "get_research_status", etaSeconds: 180, pollEverySeconds: 25 });
+      },
+    );
+
+    server.registerTool(
+      "get_research_status",
+      {
+        title: "Check a research run",
+        description:
+          "Progress of a research_app run, by the slug research_app returned. Poll every 20-30 seconds (a run takes 2-4 minutes). status 'running' shows the latest step; 'done' returns the summary and verdict and says to call get_setup_plan next; 'error' says what failed (retry with research_app force: true). A run with no progress for 6 minutes counts as failed.",
+        inputSchema: z.object({ slug: z.string().describe("the slug research_app returned") }),
+      },
+      async ({ slug }) => {
+        const s = slugify(slug);
+        const job = s ? await readJob(s) : null;
+        if (!job) {
+          const g = await getGuide(slug);
+          if (g) return json({ slug: g.slug, status: "done", url: `${SITE}/guides/${g.slug}`, summary: g.summary, verdict: g.verdict, next: "call get_setup_plan with this slug" });
+          return fail(`No research run for '${slug}'. Start one with research_app.`);
+        }
+        if (job.status === "done") {
+          const g = await getGuide(job.slug);
+          return json({ ...jobView(job), url: `${SITE}/guides/${job.slug}`, summary: g?.summary, verdict: g?.verdict, next: "call get_setup_plan with this slug" });
+        }
+        return json({ ...jobView(job), ...(job.status === "running" ? { pollWith: "get_research_status", pollEverySeconds: 25 } : { next: "retry with research_app and force: true, or tell the developer" }) });
+      },
+    );
+
+    server.registerTool(
+      "report_issue",
+      {
+        title: "Report a problem or success with a guide",
+        description:
+          "Call this when the provider's console did not match a step of the plan (kind 'console-changed'), a fact in the guide was wrong ('wrong-fact'), a step was missing ('missing-step'), and with kind 'worked' after a setup succeeded. Short and factual: what the step said, what you saw instead. NEVER include secrets, tokens, client secrets or personal data (such reports are rejected). Reports are shown on the guide page and used to fix guides.",
+        inputSchema: z.object({
+          slug: z.string().describe("the guide's slug, e.g. google-gmail"),
+          step: z.number().int().min(0).max(200).optional().describe("step number in the plan, if one applies"),
+          kind: z.enum(REPORT_KINDS),
+          text: z.string().min(1).max(MAX_TEXT),
+          evidenceUrl: z.string().max(500).optional().describe("page URL that shows the problem (no tokens in it)"),
+        }),
+      },
+      async ({ slug, step, kind, text, evidenceUrl }) => {
+        const g = await getGuide(slug);
+        if (!g) return unknown(slug);
+        const res = await submitReport({ slug: g.slug, step, kind, text, evidenceUrl });
+        return res.ok ? json({ ok: true, slug: g.slug, thanks: "Report stored." }) : fail(res.error);
       },
     );
   },
