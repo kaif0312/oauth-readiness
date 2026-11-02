@@ -144,7 +144,8 @@
           "s7"
         ],
         "note": "Manifest key names are from Slack's manifest reference, not re-fetched this session."
-      }
+      },
+      "url": "https://docs.slack.dev/app-manifests/configuring-apps-with-app-manifests"
     },
     {
       "title": "Create the app from the manifest",
@@ -177,14 +178,15 @@
       "title": "Install to your workspace and post a test alert",
       "who": "you",
       "phase": "test",
-      "detail": "OAuth & Permissions > Install to Workspace, copy the bot token into server env, invite the bot to a channel (/invite @<your app name>) and call chat.postMessage. Posting is limited to about 1 message per second per channel.",
+      "detail": "OAuth & Permissions > Install to Workspace, copy the bot token into server env, invite the bot to a channel (/invite @<your app name>) and call chat.postMessage. Posting is limited to about 1 message per second per channel. Open your app from https://api.slack.com/apps, then OAuth & Permissions.",
       "estimate": "5 min",
       "evidence": {
         "status": "sourced",
         "sourceIds": [
           "s8"
         ]
-      }
+      },
+      "url": "https://api.slack.com/apps"
     },
     {
       "title": "Implement OAuth v2 for other workspaces",
@@ -203,14 +205,15 @@
       "title": "Turn on distribution",
       "who": "you",
       "phase": "launch",
-      "detail": "Manage Distribution > Share Your App with Other Workspaces: complete the checklist (HTTPS redirect URLs, no hard-coded tokens) and click Activate Public Distribution. You get an 'Add to Slack' button and shareable install URL. Any workspace can install now, without Marketplace approval; the app is 'unlisted'.",
+      "detail": "Manage Distribution > Share Your App with Other Workspaces: complete the checklist (HTTPS redirect URLs, no hard-coded tokens) and click Activate Public Distribution. You get an 'Add to Slack' button and shareable install URL. Any workspace can install now, without Marketplace approval; the app is 'unlisted'. Open your app from https://api.slack.com/apps, then Manage Distribution.",
       "estimate": "10 min",
       "evidence": {
         "status": "sourced",
         "sourceIds": [
           "s6"
         ]
-      }
+      },
+      "url": "https://api.slack.com/apps"
     },
     {
       "title": "Design reads around the non-Marketplace limit",
@@ -230,14 +233,15 @@
       "title": "Optional: add AI agent features",
       "who": "agent-then-you",
       "phase": "build",
-      "detail": "Enable the Agents feature in the app settings sidebar, add the assistant:write scope (top-nav entry point, 'agent' label) and subscribe to the assistant/agent events. Some of these features need a paid plan on the installing workspace.",
+      "detail": "Enable the Agents feature in the app settings sidebar, add the assistant:write scope (top-nav entry point, 'agent' label) and subscribe to the assistant/agent events. Some of these features need a paid plan on the installing workspace. Open your app from https://api.slack.com/apps, then Agents in the sidebar.",
       "estimate": "30 min",
       "evidence": {
         "status": "sourced",
         "sourceIds": [
           "s10"
         ]
-      }
+      },
+      "url": "https://api.slack.com/apps"
     },
     {
       "title": "Optional: submit to the Slack Marketplace",
@@ -251,7 +255,8 @@
           "s4",
           "s5"
         ]
-      }
+      },
+      "url": "https://docs.slack.dev/slack-marketplace/slack-marketplace-review-guide"
     }
   ],
   "scopes": [
@@ -515,6 +520,22 @@
       "kind": "our-test",
       "quote": "openid-configuration: grant_types [authorization_code]; scopes [openid, profile, email]; no code_challenge_methods_supported; no registration_endpoint",
       "accessed": "2026-10-30"
+    },
+    {
+      "id": "s14",
+      "title": "Using PKCE",
+      "url": "https://docs.slack.dev/authentication/using-pkce",
+      "kind": "official-docs",
+      "quote": "PKCE allows the OAuth flow to be used securely on public clients",
+      "accessed": "2026-11-02"
+    },
+    {
+      "id": "s15",
+      "title": "Using token rotation",
+      "url": "https://docs.slack.dev/authentication/using-token-rotation",
+      "kind": "official-docs",
+      "quote": "With token rotation, it expires every 12 hours.",
+      "accessed": "2026-11-02"
     }
   ],
   "meta": {
@@ -570,5 +591,30 @@
         "note": "Slack's discovery covers only Sign in with Slack (OIDC), not the v2 bot-scope flow; no PKCE methods advertised and no dynamic registration. /oauth/v2/authorize with an unknown client_id returns HTTP 200 with an HTML page."
       }
     ]
+  },
+  "oauth": {
+    "authType": "oauth2",
+    "authorizeUrl": "https://slack.com/oauth/v2/authorize",
+    "tokenUrl": "https://slack.com/api/oauth.v2.access",
+    "revokeUrl": "https://slack.com/api/auth.revoke",
+    "pkce": "supported",
+    "clientAuth": "client_secret_post",
+    "scopeSeparator": ",",
+    "refreshTokens": "Bot and user tokens do not expire by default. With token rotation on (cannot be turned off again) tokens expire after 12 hours and come with a refresh token.",
+    "testApiCall": {
+      "method": "POST",
+      "url": "https://slack.com/api/auth.test",
+      "note": "Send Authorization: Bearer <token>. Returns team, user and bot ids for either token type."
+    },
+    "dynamicRegistration": false,
+    "evidence": {
+      "status": "sourced",
+      "sourceIds": [
+        "s1",
+        "s14",
+        "s15"
+      ],
+      "note": "Bot scopes go in scope=, user scopes in user_scope=, both comma-separated; the scopes[] in this guide are bot scopes. oauth.v2.access takes code, client_id and client_secret as form fields. PKCE is optional, must be enabled for the app and marks it a public client. The auth.revoke URL is the method named in the docs; the ok flag, not the HTTP status, carries errors on Slack's Web API."
+    }
   }
 }
