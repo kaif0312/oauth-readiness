@@ -34,6 +34,7 @@ export function agentPrompt(slug?: string, app?: string): string {
     `2. Call get_setup_plan with ${slug ? `slug "${slug}"` : "the provider's slug from list_guides"} and that profile.`,
     `3. Walk me through it in my signed-in browser: fill the forms, stop at every STOP step, never type passwords or paste the client secret into chat.`,
     `4. Put the env var names from the plan in .env.example, then verify one login works.`,
+    `5. If a console did not match a step, or something was wrong or missing, call report_issue (kind "console-changed", "wrong-fact" or "missing-step"); after a successful setup call it with kind "worked". Never put secrets in a report.`,
   ].join("\n");
 }
 
@@ -42,7 +43,9 @@ export const TOOLS = [
   ["get_setup_plan", "steps for your agent to fill the provider's console from your profile, with STOP points for you"],
   ["get_profile", "template: true gives the profile keys the forms ask for"],
   ["get_guide", "the full research: review timelines, scopes, blockers, sources"],
-  ["research_app", "research a provider that is not listed yet (2-4 min, paid, ask first)"],
+  ["research_app", "research a provider that is not listed yet (runs 2-4 min in the background: poll get_research_status; paid, ask first)"],
+  ["get_research_status", "progress and result of a research_app run (poll every 20-30 s)"],
+  ["report_issue", "tell us when a console did not match a step, or that the setup worked"],
 ] as const;
 
 const esc = (s: string) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");

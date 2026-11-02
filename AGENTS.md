@@ -21,7 +21,8 @@ app takes to get approved, what it needs, what can block it, and which steps an 
   that is someone else's). Library of 8 researched guides + live generation (`/generate?q=<app>`).
 - **MCP server** `/api/mcp` (Streamable HTTP, no auth, `mcp-handler` 2.x + `@modelcontextprotocol/server` 2.x). Tools:
   `list_guides`, `get_guide`, `get_setup_plan` (guide -> browser-agent instructions, fields resolved against a profile,
-  STOP points, rules), `get_profile`, `research_app` (runs the live agent). Add to Claude Code:
+  STOP points, rules), `get_profile`, `research_app` (starts the live agent in the background and returns at once) +
+  `get_research_status` (poll), `report_issue` (agents report console changes / wrong facts / "worked"). Add to Claude Code:
   `claude mcp add --transport http oauth-readiness https://oauth-readiness-five.vercel.app/api/mcp`.
 - **Setup agents**: `scripts/setup-github.ts` (GitHub App Manifest flow, Playwright; only dry-run tested, the live run timed
   out waiting for sign-in) and the proven path: Claude Code + this MCP + Claude in Chrome in the owner's signed-in browser
@@ -41,7 +42,9 @@ Deliverables: the live link, this repo and README.
 | `src/lib/probe.ts` | credential-free endpoint probe: RFC 8414 / OIDC discovery, PKCE, dynamic client registration, authorize error shape |
 | `src/lib/plan.ts` | `buildPlan()`: guide -> setup plan for a browser agent; `BROWSER_RULES` (never type secrets, stop at STOP steps, reload and read back after every save) |
 | `src/lib/r2.ts` | R2 client: S3 API with SigV4 via node:crypto, no SDK (`r2Get` null on 404, `r2Put`, `r2List` first 1000 keys) |
-| `src/lib/store.ts` | seeds from disk; live guides in R2 (`guides/<slug>.json`), `.data/guides` locally; `takeGenerationSlot` daily cap (`DAILY_GENERATION_LIMIT`, default 40) |
+| `src/lib/jobs.ts` | Async research: `startJob()` writes `jobs/<slug>.json` (status running/done/error, step, counts), runs `generateGuide` in Next `after()` with throttled progress writes; one job per slug (a second call returns it, no daily slot); running >6 min with no update counts as failed. `RESEARCH_STUB=1` swaps in a fake generator, ignored when NODE_ENV=production |
+| `src/lib/feedback.ts` | `report_issue` storage: `feedback/<slug>/<ts>-<rand>.json`, 2000-char limit, secret-pattern rejection, 200 reports/day, `recentReports()` for the guide page "Reports from setup agents" section |
+| `src/lib/store.ts` | seeds from disk; live guides in R2 (`guides/<slug>.json`), `.data/guides` locally; also a small kv layer (`kvGet/kvPut/kvList`, R2 or `.data/`) for jobs, feedback and counters, and `resolveSlug()` fuzzy matching (exact / alias / first-word; "google-drive" is ambiguous -> candidates, never a wrong Google guide); `takeGenerationSlot` daily cap (`DAILY_GENERATION_LIMIT`, default 40) |
 | `src/app/api/generate/route.ts` | SSE stream of agent events, `maxDuration` 300 |
 | `src/app/api/mcp/route.ts` | MCP server. Tool descriptions steer the agent: list_guides -> get_profile {template:true} -> get_setup_plan {slug, profile}. Slugs are normalised + aliased (`normalizeSlug` in `store.ts`: gmail, outlook, Slack...). A browser GET returns the install page (`installHtml`) instead of a 405 |
 | `src/lib/install.ts` | ONE source for the per-client install snippets (Claude Code, Cursor + deeplink, VS Code + deeplink, Codex, Windsurf), the copy-paste agent prompt, `/llms.txt` and the `/api/mcp` HTML page. Change the MCP URL here only |
@@ -73,8 +76,7 @@ in `.auth/` once made every CLI deploy fail silently with EBUSY).
    the MCP). Done: agent panel + nav link, library before Generate, clickable rows with mobile labels, jump nav, readiness
    relabelled as Iskaria's example, live-run stepper + retry, re-run confirmation, `/llms.txt`, stranger profiles in
    get_setup_plan (missing keys, arrays, env names, verify), guides neutralised (`validate.ts` fails on Iskaria/clinic outside
-   sources/meta/evidence notes). Not done: `research_app` is still synchronous with no progress notifications (clients with a
-   ~60 s tool timeout give up; an async job + `get_research_status` is the fix) and unauthenticated (shared daily cap);
+   sources/meta/evidence notes). Not done: `research_app` is now async (2026-11-02, branch mcp-async) but unauthenticated (shared daily cap); `after()` continuing past the response is verified locally only, check a real run on Vercel;
    evidence chips still use `title` tooltips (invisible on touch).
 
 ## Google end to end (the proof case, 2026-10-30)
