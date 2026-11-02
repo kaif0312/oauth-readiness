@@ -38,6 +38,11 @@ export const BROWSER_RULES = [
 // Which profile filled the plan: the developer's own, Iskaria's worked example (opt-in), or nothing (every field missing).
 export type ProfileMode = "yours" | "example" | "none";
 
+// Scope names that are real authorize-URL strings ("openid email" holds two). Labels such as GitHub App permissions
+// ("Issues: Read & write") are not, and are left out of the test authorize URL.
+const authorizeScopes = (guide: Guide) =>
+  guide.scopes.map((s) => s.name).filter((n) => !n.includes(": ") && /^[\w.:/-]+( [\w.:/-]+)*$/.test(n)).flatMap((n) => n.split(" "));
+
 export function buildPlan(
   guide: Guide,
   phases: PlanStep["phase"][],
@@ -142,7 +147,8 @@ function buildVerify(guide: Guide, env: string, redirectUris: string[], withScri
   const redirect = local ?? "http://localhost:8976/callback";
   const pkce = o.pkce === "required" || o.pkce === "supported" || o.authType === "oauth2-pkce-only";
   const q: Record<string, string> = { redirect_uri: redirect, response_type: "code" };
-  if (guide.scopes.length) q.scope = guide.scopes.map((s) => s.name).join(o.scopeSeparator ?? " ");
+  const scopes = authorizeScopes(guide);
+  if (scopes.length) q.scope = scopes.join(o.scopeSeparator ?? " ");
   q.state = "<random>";
   if (pkce) Object.assign(q, { code_challenge: "<S256 of verifier>", code_challenge_method: "S256" });
   Object.assign(q, o.extraAuthorizeParams);
@@ -151,6 +157,6 @@ function buildVerify(guide: Guide, env: string, redirectUris: string[], withScri
     summary: `Done when the developer's own account completes the flow and the test call succeeds. Run verifyScript in the developer's repo (Node 20+, scratch file, delete after); it prints no tokens or secrets.`,
     authorizeUrl,
     ...(local ? {} : { redirectNote: `No localhost redirect URI in the profile: add ${redirect} as a redirect URI in the provider console before running the script.` }),
-    ...(withScript ? { verifyScript: buildVerifyScript({ idEnv: `${env}_CLIENT_ID`, secretEnv: `${env}_CLIENT_SECRET`, authorizeUrl: o.authorizeUrl, tokenUrl: o.tokenUrl, redirect, scopes: guide.scopes.map((s) => s.name), sep: o.scopeSeparator ?? " ", pkce, clientAuth: o.clientAuth === "none" || o.authType === "oauth2-pkce-only" ? "none" : o.clientAuth, extra: o.extraAuthorizeParams ?? {}, test: o.testApiCall ?? null }) } : {}),
+    ...(withScript ? { verifyScript: buildVerifyScript({ idEnv: `${env}_CLIENT_ID`, secretEnv: `${env}_CLIENT_SECRET`, authorizeUrl: o.authorizeUrl, tokenUrl: o.tokenUrl, redirect, scopes, sep: o.scopeSeparator ?? " ", pkce, clientAuth: o.clientAuth === "none" || o.authType === "oauth2-pkce-only" ? "none" : o.clientAuth, extra: o.extraAuthorizeParams ?? {}, test: o.testApiCall ?? null }) } : {}),
   };
 }
