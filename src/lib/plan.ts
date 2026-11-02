@@ -216,8 +216,10 @@ function buildVerify(guide: Guide, env: string, redirectUris: string[], withScri
   if (pkce) Object.assign(q, { code_challenge: "<S256 of verifier>", code_challenge_method: "S256" });
   Object.assign(q, o.extraAuthorizeParams);
   const base = withEnvs(o.authorizeUrl, placeholders);
-  const idEnv = o.credentials?.find((c) => /ID$/.test(c.env))?.env ?? `${env}_CLIENT_ID`;
-  const secretEnv = o.credentials?.find((c) => !/ID$/.test(c.env) && /SECRET|KEY/.test(c.env))?.env ?? `${env}_CLIENT_SECRET`;
+  // Declared credentials name the vars: the id is ..._CLIENT_ID / _APP_ID / _API_KEY (Shopify), the secret the one with SECRET.
+  const creds = o.credentials ?? [];
+  const idEnv = creds.find((c) => /(CLIENT_?ID|APP_?ID|API_?KEY|_ID)$/.test(c.env) && !/SECRET/.test(c.env))?.env ?? `${env}_CLIENT_ID`;
+  const secretEnv = creds.find((c) => /SECRET/.test(c.env))?.env ?? creds.find((c) => c.env !== idEnv && /KEY|TOKEN/.test(c.env))?.env ?? `${env}_CLIENT_SECRET`;
   const authorizeUrl = `${base}${base.includes("?") ? "&" : "?"}client_id=\${${idEnv}}&${Object.entries(q).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join("&")}`;
   const scopeNote = o.noScopeParam
     ? "No scope parameter: this provider takes permissions from the app's own settings/manifest."
