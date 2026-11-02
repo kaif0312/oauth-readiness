@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # OAuth Readiness: handoff for the next agent
 
-Last updated 2026-10-30. Read this, then `README.md` (product story, decisions, evidence) before changing anything.
+Last updated 2026-11-02. Read this, then `README.md` (product story, decisions, evidence) before changing anything.
 
 ## What this is
 
@@ -63,8 +63,10 @@ in `.auth/` once made every CLI deploy fail silently with EBUSY).
 
 1. **Live guides moved to Cloudflare R2 (2026-10-30).** Vercel Blob (Hobby) blocked the store over quota (every read 403),
    so live guides now go to the PRIVATE R2 bucket `oauth-readiness-guides`, with an API token limited to Object Read & Write
-   on that bucket. Env `R2_*` set in Vercel Production + Preview and `.env.local`. The 4 live guides (calendly, notion,
-   xero, zoom) are in R2. Account details: `AGENTS.local.md`
+   on that bucket. Env `R2_*` set in Vercel Production + Preview and `.env.local`. Live guides in R2 (2026-11-02): calendly,
+   notion, xero, zoom, dropbox, asana, shopify, quickbooks-online, airtable, pipedrive, discord, x-twitter, linear, stripe
+   (Stripe Apps route), openai (api-key), trello (Atlassian OAuth2 route; classic key+token only mentioned). Previews write to
+   the same bucket. `ANTHROPIC_API_KEY` is set for Preview on branch `integrate` only. Account details: `AGENTS.local.md`
    (git-ignored, owner's machine only).
 2. **Live guides are neutral (2026-11-01).** The live agent no longer sees the Iskaria profile: it writes for any developer,
    and `ownerLeaks()` (`guide.ts`, shared with `validate.ts`) sends Iskaria/clinic wording back for one rewrite round.
@@ -78,8 +80,20 @@ in `.auth/` once made every CLI deploy fail silently with EBUSY).
    the MCP). Done: agent panel + nav link, library before Generate, clickable rows with mobile labels, jump nav, readiness
    relabelled as Iskaria's example, live-run stepper + retry, re-run confirmation, `/llms.txt`, stranger profiles in
    get_setup_plan (missing keys, arrays, env names, verify), guides neutralised (`validate.ts` fails on Iskaria/clinic outside
-   sources/meta/evidence notes). Not done: `research_app` is now async (2026-11-02, branch mcp-async) but unauthenticated (shared daily cap); `after()` continuing past the response is verified locally only, check a real run on Vercel;
-   evidence chips still use `title` tooltips (invisible on touch).
+   sources/meta/evidence notes). Not done: `research_app` is unauthenticated (shared daily cap); evidence chips still use
+   `title` tooltips (invisible on touch).
+6. **Generality pass 2026-11-02 (live on main).** async `research_app` (verified on Vercel: returns in ~2 s, `after()` finishes
+   the run), no-profile plans fill nothing, `oauth` endpoints block + `verifyScript`, non-standard auth types, placeholders,
+   scope filtering. A 10-provider evaluation (Shopify, QuickBooks, Airtable, Pipedrive, Discord, X, Linear, Stripe, OpenAI,
+   Trello) drove it; all 16 eval/live guides re-researched in the new format. Open: Stripe Connect has no guide (alias ->
+   Stripe Apps); Trello key+token route; the job lock is not atomic.
+
+## GitHub end to end (2026-11-02)
+
+Plan from production `get_setup_plan("github")` with a stranger-style profile; Claude in Chrome filled the GitHub App form
+(flow saved: `~/.claude/scripts/browser-flows/github-app-create.js`); the human did sudo confirm, Create GitHub App, client
+secret, Authorize. The plan's `verifyScript` (`node --env-file=.env verify.mjs`): PKCE exchange OK, expiring token + refresh
+token, `GET /user` 200. App "OAuth Readiness Demo kaif0312" on the owner's account (private key in `~/.secrets/`, unused).
 
 ## Google end to end (the proof case, 2026-10-30)
 

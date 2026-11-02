@@ -154,9 +154,9 @@
           "profileKey": "homepageUrl"
         },
         {
-          "label": "Callback URL",
+          "label": "Redirect URI",
           "profileKey": "redirectUris",
-          "note": "Your production callback from the profile's redirectUris; add the localhost one for development. Multiple callback URLs are allowed."
+          "note": "Labelled 'Redirect URI' under 'Identifying and authorizing users' (was 'Callback URL'; seen 2026-11-02). Your production callback from the profile's redirectUris; add the localhost one for development. Multiple callback URLs are allowed."
         },
         {
           "label": "Expire user authorization tokens",
