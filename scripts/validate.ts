@@ -2,7 +2,7 @@
 // Usage: node scripts/validate.ts [file...]   (default: every file in src/data/guides)
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { Guide, ownerLeaks } from "../src/lib/guide.ts";
+import { Guide, ownerLeaks, scopeWarnings } from "../src/lib/guide.ts";
 
 const dir = "src/data/guides";
 const files = process.argv.slice(2).length
@@ -39,6 +39,17 @@ for (const file of files) {
     console.log(`FAIL ${file}: developer-specific wording (/iskaria|clinic/i) outside sources/meta/evidence.note`);
     for (const l of leaks.slice(0, 20)) console.log(`  ${l}`);
     continue;
+  }
+  // Scope names must be scope strings. Seeds (src/data/guides) fail on it; other files (live guides) only warn.
+  const bad = scopeWarnings(res.data);
+  if (bad.length) {
+    const seed = file.split(String.fromCharCode(92)).join("/").includes("src/data/guides/");
+    console.log(`${seed ? "FAIL" : "WARN"} ${file}`);
+    for (const b of bad.slice(0, 20)) console.log(`  ${b}`);
+    if (seed) {
+      failed++;
+      continue;
+    }
   }
   console.log(`ok   ${file} (${res.data.steps.length} steps, ${res.data.sources.length} sources)`);
 }

@@ -12,7 +12,9 @@ export type VerifyConfig = {
   scopes: string[];
   sep: " " | ",";
   pkce: boolean;
-  clientAuth: "client_secret_post" | "client_secret_basic" | "none" | "unknown";
+  clientAuth: "client_secret_post" | "client_secret_basic" | "secret_key" | "none" | "unknown";
+  noScopeParam?: boolean;
+  placeholders?: { name: string; env: string }[];
   extra: Record<string, string>;
   test: { method: "GET" | "POST"; url: string; note?: string } | null;
 };
@@ -25,13 +27,19 @@ const C = ${JSON.stringify(c)};
 const id = process.env[C.idEnv];
 const secret = process.env[C.secretEnv];
 const fail = (m) => { console.log("FAIL: " + m); process.exit(1); };
+const ph = {};
+for (const p of C.placeholders || []) {
+  if (!process.env[p.env]) fail("set " + p.env + " in the environment first (the value for {" + p.name + "} in the provider URLs)");
+  ph[p.name] = process.env[p.env];
+}
+const fillUrl = (u) => u.replace(/[{]([a-zA-Z0-9_]+)[}]/g, (m, n) => (n in ph ? ph[n] : m));
 if (!id || (C.clientAuth !== "none" && !secret)) fail("set " + C.idEnv + (C.clientAuth !== "none" ? " and " + C.secretEnv : "") + " in the environment first");
 const redirect = new URL(C.redirect);
 const state = crypto.randomBytes(16).toString("hex");
 const verifier = crypto.randomBytes(32).toString("base64url");
-const auth = new URL(C.authorizeUrl);
+const auth = new URL(fillUrl(C.authorizeUrl));
 const q = { client_id: id, redirect_uri: C.redirect, response_type: "code", state };
-if (C.scopes.length) q.scope = C.scopes.join(C.sep);
+if (C.scopes.length && !C.noScopeParam) q.scope = C.scopes.join(C.sep);
 if (C.pkce) { q.code_challenge = crypto.createHash("sha256").update(verifier).digest("base64url"); q.code_challenge_method = "S256"; }
 for (const [k, v] of Object.entries({ ...q, ...C.extra })) auth.searchParams.set(k, v);
 const params = await new Promise((resolve) => {
@@ -55,8 +63,9 @@ const body = new URLSearchParams({ grant_type: "authorization_code", code: param
 const headers = { "content-type": "application/x-www-form-urlencoded", accept: "application/json" };
 if (C.pkce) body.set("code_verifier", verifier);
 if (C.clientAuth === "client_secret_basic") headers.authorization = "Basic " + Buffer.from(encodeURIComponent(id) + ":" + encodeURIComponent(secret)).toString("base64");
+else if (C.clientAuth === "secret_key") headers.authorization = "Bearer " + secret;
 else { body.set("client_id", id); if (C.clientAuth !== "none") body.set("client_secret", secret); }
-const res = await fetch(C.tokenUrl, { method: "POST", headers, body });
+const res = await fetch(fillUrl(C.tokenUrl), { method: "POST", headers, body });
 const text = await res.text();
 let t = {};
 try { t = JSON.parse(text); } catch { t = Object.fromEntries(new URLSearchParams(text)); }
@@ -66,8 +75,9 @@ console.log("SUCCESS: token exchange worked");
 console.log("granted scopes: " + (t.scope || (t.authed_user && t.authed_user.scope) || "(not reported)"));
 console.log("token type: " + (t.token_type || "(not reported)") + ", expires_in: " + (t.expires_in ?? "(none)") + ", refresh token: " + (t.refresh_token ? "yes" : "no"));
 if (C.test) {
-  const r = await fetch(C.test.url, { method: C.test.method, headers: { authorization: "Bearer " + token, accept: "application/json" } });
-  console.log("test call " + C.test.method + " " + C.test.url + " -> HTTP " + r.status);
+  const testUrl = fillUrl(C.test.url);
+  const r = await fetch(testUrl, { method: C.test.method, headers: { authorization: "Bearer " + token, accept: "application/json" } });
+  console.log("test call " + C.test.method + " " + testUrl + " -> HTTP " + r.status);
   process.exit(r.ok ? 0 : 1);
 }
 console.log("no test call in this guide: make one read-only API call with the token yourself");

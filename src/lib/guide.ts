@@ -65,12 +65,25 @@ export const Blocker = z.object({
 // The facts a developer's code needs to run the OAuth flow, so a setup plan can also verify the app end to end.
 // Optional: guides written before this field existed (live guides in R2) still parse.
 export const OAuthInfo = z.object({
-  authType: z.enum(["oauth2", "oauth2-pkce-only", "api-key", "other"]).describe("api-key = the provider has no OAuth for third parties; the steps then describe creating a key"),
+  authType: z
+    .enum(["oauth2", "oauth2-pkce-only", "oauth1", "api-key", "custom", "other"])
+    .describe("oauth2 = standard authorization-code flow. oauth1 = OAuth 1.0a (request signing, needs a library). api-key = the developer's own key/token, no per-user authorization flow (the steps then describe creating a key). custom = a provider-specific flow that is not standard OAuth2 (describe it in the steps). other = unclear"),
   authorizeUrl: z.string().optional().describe("authorization endpoint, https"),
   tokenUrl: z.string().optional().describe("token endpoint, https"),
   revokeUrl: z.string().optional(),
   pkce: z.enum(["required", "supported", "unsupported", "unknown"]),
-  clientAuth: z.enum(["client_secret_post", "client_secret_basic", "none", "unknown"]).describe("how the token endpoint wants the client credentials"),
+  clientAuth: z
+    .enum(["client_secret_post", "client_secret_basic", "secret_key", "none", "unknown"])
+    .describe("how the token endpoint wants the client credentials. secret_key = no client secret: the code is exchanged with the platform's own secret API key (Stripe Connect: Authorization: Bearer sk_...)"),
+  noScopeParam: z.boolean().optional().describe("true if the authorize URL must NOT carry a scope parameter (permissions come from the app manifest/settings, e.g. Stripe Apps, GitHub Apps)"),
+  credentials: z
+    .array(z.object({ env: z.string().describe("env var name, e.g. STRIPE_SECRET_KEY"), what: z.string().describe("what the developer stores there, and where it comes from") }))
+    .optional()
+    .describe("what the developer stores for this provider. Omit for plain client id + client secret"),
+  placeholders: z
+    .array(z.object({ name: z.string().describe("name as written in the URLs, without braces, e.g. shop"), about: z.string().describe("what the developer must supply, e.g. the store's myshopify subdomain"), env: z.string().describe("env var name for it, e.g. SHOPIFY_SHOP") }))
+    .optional()
+    .describe("{name} parts inside the authorize/token/test URLs that differ per account (Shopify {shop}, QuickBooks {realmId}, Pipedrive {api_domain})"),
   scopeSeparator: z.enum([" ", ","]).optional().describe("default is a space"),
   extraAuthorizeParams: z.record(z.string(), z.string()).optional().describe("e.g. {access_type:'offline', prompt:'consent'} or {token_access_type:'offline'}"),
   refreshTokens: z.string().describe("short, e.g. 'yes, rotating; offline scope needed'"),
@@ -158,3 +171,17 @@ export function ownerLeaks(value: unknown, path: (string | number)[] = []): stri
   if (value && typeof value === "object") return Object.entries(value).flatMap(([k, v]) => ownerLeaks(v, [...path, k]));
   return [];
 }
+
+// ---- Scope strings ---------------------------------------------------------------------------------------------
+// Scope entries must be real scope strings ("repo", "https://www.googleapis.com/auth/gmail.readonly", "chat:write"), not
+// prose or UI labels ("Issues: Read & write"). "openid email" holds two; split before testing.
+export const SCOPE_STRING = /^[\w.:/-]+$/;
+export const isScopeString = (name: string) => name.trim().split(/\s+/).every((p) => SCOPE_STRING.test(p));
+export function scopeWarnings(g: Guide): string[] {
+  // noScopeParam: permissions are settings/manifest labels (GitHub App "Issues: Read & write"), not authorize-URL scopes.
+  if (g.oauth?.noScopeParam) return [];
+  return g.scopes.filter((s) => !isScopeString(s.name)).map((s) => `scope "${s.name}" is not a scope string (prose or a UI label)`);
+}
+
+// {name} left in an endpoint URL.
+export const urlPlaceholders = (url?: string) => [...new Set([...(url ?? "").matchAll(/\{(\w+)\}/g)].map((m) => m[1]))];

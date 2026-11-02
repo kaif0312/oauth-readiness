@@ -58,6 +58,11 @@ const ALIASES: Record<string, string> = {
   facebook: "meta",
   instagram: "meta",
   whatsapp: "meta",
+  // live guides (R2); aliases may point at live slugs
+  twitter: "x-twitter",
+  "stripe-connect": "stripe",
+  quickbooks: "quickbooks-online",
+  intuit: "quickbooks-online",
 };
 
 export function normalizeSlug(input: string): string {

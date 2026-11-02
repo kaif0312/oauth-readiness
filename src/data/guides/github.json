@@ -651,6 +651,7 @@
     "tokenUrl": "https://github.com/login/oauth/access_token",
     "pkce": "supported",
     "clientAuth": "client_secret_post",
+    "noScopeParam": true,
     "scopeSeparator": " ",
     "extraAuthorizeParams": {},
     "refreshTokens": "GitHub App with 'Expire user authorization tokens' on (default): access token 8 hours, refresh token 6 months, rotating. The docs say to send scope=offline_access to receive the expiring token and refresh token. OAuth App tokens do not expire.",
