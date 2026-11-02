@@ -647,6 +647,22 @@
       "kind": "our-test",
       "quote": "code_challenge_methods_supported: [plain, S256]; no registration_endpoint; unknown client_id + no scope -> 302 to signin/oauth/error (invalid_request: Missing required parameter: scope)",
       "accessed": "2026-10-30"
+    },
+    {
+      "id": "s18",
+      "title": "Using OAuth 2.0 for Web Server Applications",
+      "url": "https://developers.google.com/identity/protocols/oauth2/web-server",
+      "kind": "official-docs",
+      "quote": "endpoint is at https://accounts.google.com/o/oauth2/v2/auth",
+      "accessed": "2026-11-02"
+    },
+    {
+      "id": "s19",
+      "title": "users.getProfile",
+      "url": "https://developers.google.com/workspace/gmail/api/reference/rest/v1/users/getProfile",
+      "kind": "official-docs",
+      "quote": "Gets the current user",
+      "accessed": "2026-11-02"
     }
   ],
   "meta": {
@@ -712,5 +728,34 @@
         "note": "Discovery found at both oauth-authorization-server and openid-configuration; PKCE plain and S256; no dynamic client registration. Authorize with an unknown client redirected to Google's error page (invalid_request, missing scope) before checking the client."
       }
     ]
+  },
+  "oauth": {
+    "authType": "oauth2",
+    "authorizeUrl": "https://accounts.google.com/o/oauth2/v2/auth",
+    "tokenUrl": "https://oauth2.googleapis.com/token",
+    "revokeUrl": "https://oauth2.googleapis.com/revoke",
+    "pkce": "supported",
+    "clientAuth": "client_secret_post",
+    "scopeSeparator": " ",
+    "extraAuthorizeParams": {
+      "access_type": "offline",
+      "prompt": "consent"
+    },
+    "refreshTokens": "Only with access_type=offline, and only returned on the first consent unless prompt=consent is sent again. In Testing publishing status the authorization (and refresh token) expires after 7 days.",
+    "testApiCall": {
+      "method": "GET",
+      "url": "https://gmail.googleapis.com/gmail/v1/users/me/profile",
+      "note": "Needs a read-capable Gmail scope such as gmail.readonly; gmail.send alone cannot call it."
+    },
+    "dynamicRegistration": false,
+    "evidence": {
+      "status": "sourced",
+      "sourceIds": [
+        "s17",
+        "s18",
+        "s19"
+      ],
+      "note": "Token, revoke and PKCE (plain, S256) values are from Google's discovery document; client_secret_post and client_secret_basic are both advertised. The authorize URL and access_type are from the web-server flow page; prompt=consent re-issues a refresh token on repeat consent."
+    }
   }
 }

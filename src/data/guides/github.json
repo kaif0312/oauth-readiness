@@ -114,7 +114,8 @@
           "g3"
         ],
         "note": "OAuth App form (g3): Application name, Homepage URL, Application description, Authorization callback URL (up to 10), Enable Device Flow, Expire user access tokens (on by default)."
-      }
+      },
+      "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/differences-between-github-apps-and-oauth-apps"
     },
     {
       "title": "Open the GitHub App registration form",
@@ -176,7 +177,8 @@
           "g1",
           "g2"
         ]
-      }
+      },
+      "url": "https://github.com/settings/apps/new"
     },
     {
       "title": "Set the post-install redirect",
@@ -199,7 +201,8 @@
           "g1"
         ],
         "note": "The interaction between Setup URL and user-authorization-during-install is from prior knowledge of the form, not re-checked this session."
-      }
+      },
+      "url": "https://github.com/settings/apps/new"
     },
     {
       "title": "Configure the webhook",
@@ -229,7 +232,8 @@
         "sourceIds": [
           "g1"
         ]
-      }
+      },
+      "url": "https://github.com/settings/apps/new"
     },
     {
       "title": "Choose permissions",
@@ -249,7 +253,8 @@
           "g1",
           "g10"
         ]
-      }
+      },
+      "url": "https://github.com/settings/apps/new"
     },
     {
       "title": "Set who can install it and create the app",
@@ -268,13 +273,14 @@
         "sourceIds": [
           "g1"
         ]
-      }
+      },
+      "url": "https://github.com/settings/apps/new"
     },
     {
       "title": "Generate credentials and store them server-side",
       "who": "you",
       "phase": "build",
-      "detail": "On the app page note the App ID and Client ID, generate a client secret and a private key (.pem). Store them in server env (Vercel), never in the repo or browser. The server signs a JWT with the private key to mint 1-hour installation tokens.",
+      "detail": "On the app page note the App ID and Client ID, generate a client secret and a private key (.pem). Store them in server env (Vercel), never in the repo or browser. The server signs a JWT with the private key to mint 1-hour installation tokens. On the app's settings page (https://github.com/settings/apps lists your apps; open yours, or the organization's Developer settings for an org-owned app).",
       "estimate": "5 min",
       "evidence": {
         "status": "sourced",
@@ -282,13 +288,14 @@
           "g2"
         ],
         "note": "1-hour installation token lifetime is sourced; the credential page layout is from prior knowledge."
-      }
+      },
+      "url": "https://github.com/settings/apps"
     },
     {
       "title": "Install on your own account and test",
       "who": "you",
       "phase": "test",
-      "detail": "Install the app on your account or org, choose 'Only select repositories', and run the flow: mint an installation token, create an issue, push a branch and open a PR. Watch rate-limit headers.",
+      "detail": "Install the app on your account or org, choose 'Only select repositories', and run the flow: mint an installation token, create an issue, push a branch and open a PR. Watch rate-limit headers. Open the app from https://github.com/settings/apps and use Install App in the sidebar.",
       "estimate": "15 min",
       "evidence": {
         "status": "sourced",
@@ -296,13 +303,14 @@
           "g5",
           "g7"
         ]
-      }
+      },
+      "url": "https://github.com/settings/apps"
     },
     {
       "title": "Make it public and handle org installs",
       "who": "you",
       "phase": "launch",
-      "detail": "Switch to 'Any account'. Share the public install link. In organizations, only owners can install on the whole org; repo admins can install on repos they administer if the app requests no organization permissions and not Repository administration; other members can only request, which emails the owner. Optional: list on GitHub Marketplace (privacy policy, support link; paid plans need a verified-publisher org and 100+ installations).",
+      "detail": "Switch to 'Any account'. Share the public install link. In organizations, only owners can install on the whole org; repo admins can install on repos they administer if the app requests no organization permissions and not Repository administration; other members can only request, which emails the owner. Optional: list on GitHub Marketplace (privacy policy, support link; paid plans need a verified-publisher org and 100+ installations). Open the app from https://github.com/settings/apps > Advanced / Optional features as needed.",
       "estimate": "10 min",
       "evidence": {
         "status": "sourced",
@@ -311,7 +319,8 @@
           "g6",
           "g9"
         ]
-      }
+      },
+      "url": "https://github.com/settings/apps"
     }
   ],
   "scopes": [
@@ -324,7 +333,8 @@
         "sourceIds": [
           "g1"
         ]
-      }
+      },
+      "note": "Label only: GitHub App user authorization ignores the scope parameter. Set this under Repository permissions on the app."
     },
     {
       "name": "Pull requests: Read & write",
@@ -564,6 +574,22 @@
       "kind": "our-test",
       "quote": "No .well-known/oauth-authorization-server or openid-configuration (404); unknown client_id redirects (302) to the github.com login page instead of an error",
       "accessed": "2026-10-30"
+    },
+    {
+      "id": "g14",
+      "title": "Generating a user access token for a GitHub App",
+      "url": "https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-user-access-token-for-a-github-app",
+      "kind": "official-docs",
+      "quote": "The value will always be 28800 (8 hours).",
+      "accessed": "2026-11-02"
+    },
+    {
+      "id": "g15",
+      "title": "Refreshing user access tokens",
+      "url": "https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/refreshing-user-access-tokens",
+      "kind": "official-docs",
+      "quote": "The value will always be 15897600 (6 months).",
+      "accessed": "2026-11-02"
     }
   ],
   "meta": {
@@ -618,5 +644,30 @@
         "note": "github.com publishes no OAuth/OIDC discovery document (both 404), so no advertised PKCE methods and no registration_endpoint. The authorize endpoint with an unknown client_id answers 302 to /login rather than an error page."
       }
     ]
+  },
+  "oauth": {
+    "authType": "oauth2",
+    "authorizeUrl": "https://github.com/login/oauth/authorize",
+    "tokenUrl": "https://github.com/login/oauth/access_token",
+    "pkce": "supported",
+    "clientAuth": "client_secret_post",
+    "scopeSeparator": " ",
+    "extraAuthorizeParams": {},
+    "refreshTokens": "GitHub App with 'Expire user authorization tokens' on (default): access token 8 hours, refresh token 6 months, rotating. The docs say to send scope=offline_access to receive the expiring token and refresh token. OAuth App tokens do not expire.",
+    "testApiCall": {
+      "method": "GET",
+      "url": "https://api.github.com/user",
+      "note": "Send Authorization: Bearer <user access token>. Use a user-to-server (ghu_) token, not an installation token."
+    },
+    "dynamicRegistration": false,
+    "evidence": {
+      "status": "sourced",
+      "sourceIds": [
+        "g13",
+        "g14",
+        "g15"
+      ],
+      "note": "These are the GitHub App user-authorization endpoints. The scope parameter is ignored for GitHub Apps (permissions are fine-grained on the app registration; the only value the docs allow is offline_access, which requests the expiring token plus refresh token), so the permission labels in scopes[] must not be sent as scope. An OAuth App uses the same authorize and token URLs but takes real scopes (e.g. repo) comma- or space-separated in the scope parameter and has non-expiring tokens. The docs list PKCE as strongly recommended (S256 only). Client credentials are sent as client_id and client_secret request parameters."
+    }
   }
 }

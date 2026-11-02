@@ -600,6 +600,22 @@
       "url": "https://console.cloud.google.com/auth/scopes",
       "kind": "our-test",
       "accessed": "2026-10-30"
+    },
+    {
+      "id": "s16",
+      "title": "Using OAuth 2.0 for Web Server Applications",
+      "url": "https://developers.google.com/identity/protocols/oauth2/web-server",
+      "kind": "official-docs",
+      "quote": "endpoint is at https://accounts.google.com/o/oauth2/v2/auth",
+      "accessed": "2026-11-02"
+    },
+    {
+      "id": "s17",
+      "title": "Sites: list (Search Console API)",
+      "url": "https://developers.google.com/webmaster-tools/v1/sites/list",
+      "kind": "official-docs",
+      "quote": "Lists the user",
+      "accessed": "2026-11-02"
     }
   ],
   "meta": {
@@ -676,5 +692,34 @@
         "result": "confirmed"
       }
     ]
+  },
+  "oauth": {
+    "authType": "oauth2",
+    "authorizeUrl": "https://accounts.google.com/o/oauth2/v2/auth",
+    "tokenUrl": "https://oauth2.googleapis.com/token",
+    "revokeUrl": "https://oauth2.googleapis.com/revoke",
+    "pkce": "supported",
+    "clientAuth": "client_secret_post",
+    "scopeSeparator": " ",
+    "extraAuthorizeParams": {
+      "access_type": "offline",
+      "prompt": "consent"
+    },
+    "refreshTokens": "Only with access_type=offline, and only returned on the first consent unless prompt=consent is sent again. In Testing publishing status the authorization (and refresh token) expires after 7 days.",
+    "testApiCall": {
+      "method": "GET",
+      "url": "https://www.googleapis.com/webmasters/v3/sites",
+      "note": "Needs webmasters.readonly. Business Profile and Analytics calls have their own endpoints and need separate API access (see the steps)."
+    },
+    "dynamicRegistration": false,
+    "evidence": {
+      "status": "sourced",
+      "sourceIds": [
+        "s14",
+        "s16",
+        "s17"
+      ],
+      "note": "Token, revoke and PKCE (plain, S256) values are from Google's discovery document; client_secret_post and client_secret_basic are both advertised. The authorize URL and access_type are from the web-server flow page."
+    }
   }
 }

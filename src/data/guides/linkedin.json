@@ -151,7 +151,8 @@
           "l5",
           "l9"
         ]
-      }
+      },
+      "url": "https://www.linkedin.com/company/setup/new/"
     },
     {
       "title": "Create a NEW developer app just for Community Management",
@@ -190,7 +191,7 @@
       "title": "Have the Page super admin verify the app",
       "who": "you",
       "phase": "build",
-      "detail": "Settings tab > Verify. Send the verification request to a super admin of your Company Page, who has 30 days to approve. Unverified apps fail Development tier vetting.",
+      "detail": "Settings tab > Verify. Send the verification request to a super admin of your Company Page, who has 30 days to approve. Unverified apps fail Development tier vetting. Open your app from https://www.linkedin.com/developers/apps, then the Settings tab.",
       "estimate": "5 min",
       "evidence": {
         "status": "sourced",
@@ -198,13 +199,14 @@
           "l8",
           "l4"
         ]
-      }
+      },
+      "url": "https://www.linkedin.com/developers/apps"
     },
     {
       "title": "Add redirect URL and generate a test token",
       "who": "agent-then-you",
       "phase": "test",
-      "detail": "Auth tab: add the absolute HTTPS callback (no #, query ignored). Use the Token Generator or the 3-legged flow. Before approval only open scopes are listed.",
+      "detail": "Auth tab: add the absolute HTTPS callback (no #, query ignored). Use the Token Generator or the 3-legged flow. Before approval only open scopes are listed. Open your app from https://www.linkedin.com/developers/apps, then the Auth tab.",
       "estimate": "10 min",
       "fields": [
         {
@@ -218,13 +220,14 @@
           "l7",
           "l1"
         ]
-      }
+      },
+      "url": "https://www.linkedin.com/developers/apps"
     },
     {
       "title": "Apply for Community Management API Development tier",
       "who": "agent-then-you",
       "phase": "launch",
-      "detail": "Products tab > Community Management API > access form. Give the legal name, registered address, website, privacy policy and business email (then verify the email), and describe the use case: your app posts to each customer's own Page on their behalf. Read the restricted use cases first. An agent can draft the use-case text; a human submits.",
+      "detail": "Products tab > Community Management API > access form. Give the legal name, registered address, website, privacy policy and business email (then verify the email), and describe the use case: your app posts to each customer's own Page on their behalf. Read the restricted use cases first. An agent can draft the use-case text; a human submits. Open your app from https://www.linkedin.com/developers/apps, then the Products tab.",
       "estimate": "30 min hands-on; ~10-14 business days reported",
       "fields": [
         {
@@ -254,7 +257,8 @@
           "l4",
           "l10"
         ]
-      }
+      },
+      "url": "https://www.linkedin.com/developers/apps"
     },
     {
       "title": "Build the Page-posting flow within Development tier limits",
@@ -287,7 +291,7 @@
       "title": "Apply for Standard tier",
       "who": "agent-then-you",
       "phase": "launch",
-      "detail": "My Apps > Products > Standard tier access form: company and product overview, use case, test credentials, screencast. LinkedIn reviews against privacy policy, terms, security and data-storage rules, and may decline at its discretion. A rejection means a new app and a new Development tier application.",
+      "detail": "My Apps > Products > Standard tier access form: company and product overview, use case, test credentials, screencast. LinkedIn reviews against privacy policy, terms, security and data-storage rules, and may decline at its discretion. A rejection means a new app and a new Development tier application. Open your app from https://www.linkedin.com/developers/apps, then the Products tab.",
       "estimate": "1 h hands-on; weeks of waiting (no published SLA)",
       "fields": [
         {
@@ -305,7 +309,8 @@
           "l3",
           "l4"
         ]
-      }
+      },
+      "url": "https://www.linkedin.com/developers/apps"
     },
     {
       "title": "Handle 60-day token expiry",
@@ -319,7 +324,8 @@
           "l7",
           "l12"
         ]
-      }
+      },
+      "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/programmatic-refresh-tokens"
     }
   ],
   "scopes": [
@@ -583,6 +589,14 @@
       "kind": "our-test",
       "quote": "openid-configuration at /oauth only; scopes_supported: [openid, profile, email]; no code_challenge_methods_supported; no registration_endpoint",
       "accessed": "2026-10-30"
+    },
+    {
+      "id": "l14",
+      "title": "Organization Access Control by Role",
+      "url": "https://learn.microsoft.com/en-us/linkedin/marketing/community-management/organizations/organization-access-control-by-role",
+      "kind": "official-docs",
+      "quote": "GET https://api.linkedin.com/rest/organizationAcls?q=roleAssignee",
+      "accessed": "2026-11-02"
     }
   ],
   "meta": {
@@ -646,5 +660,30 @@
         "note": "LinkedIn's OIDC discovery lives under /oauth (root .well-known paths 404) and lists only openid/profile/email; it advertises no PKCE methods and no dynamic registration. Unknown client_id on /oauth/v2/authorization returns HTTP 200 with an HTML page."
       }
     ]
+  },
+  "oauth": {
+    "authType": "oauth2",
+    "authorizeUrl": "https://www.linkedin.com/oauth/v2/authorization",
+    "tokenUrl": "https://www.linkedin.com/oauth/v2/accessToken",
+    "pkce": "unknown",
+    "clientAuth": "client_secret_post",
+    "scopeSeparator": " ",
+    "refreshTokens": "Access tokens last 60 days (expires_in 5184000). Programmatic refresh tokens (365 days) are issued only to apps approved for the Marketing Developer Platform; otherwise re-run the authorization flow.",
+    "testApiCall": {
+      "method": "GET",
+      "url": "https://api.linkedin.com/rest/organizationAcls?q=roleAssignee",
+      "note": "Needs headers X-Restli-Protocol-Version: 2.0.0 and Linkedin-Version: YYYYMM, plus rw_organization_admin or r_organization_social-class scopes. The OpenID /v2/userinfo call only works if the app has Sign In with LinkedIn, which this guide keeps off the Community Management app."
+    },
+    "dynamicRegistration": false,
+    "evidence": {
+      "status": "sourced",
+      "sourceIds": [
+        "l7",
+        "l12",
+        "l13",
+        "l14"
+      ],
+      "note": "Endpoints from the authorization-code-flow page and LinkedIn's OIDC discovery document. The token request sends client_id and client_secret as form fields. PKCE is documented only for native apps and LinkedIn enables it on request after contacting your LinkedIn contact, so it is 'unknown' for a normal web app. No revoke endpoint was found in the docs, so revokeUrl is omitted."
+    }
   }
 }

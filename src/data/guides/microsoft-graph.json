@@ -118,8 +118,8 @@
       "title": "Register a multitenant app",
       "who": "you",
       "phase": "build",
-      "detail": "Sign in to the Microsoft Entra admin center as at least Application Developer, in your company tenant. Entra ID > App registrations > New registration. Name: your appName (profile). Supported account types: 'Multiple Entra ID tenants' (organisations only; for business users on work accounts). Pick 'Any Entra ID Tenant + Personal Microsoft accounts' only if you also want Outlook.com users. Register, then record the Application (client) ID.",
-      "url": "https://entra.microsoft.com",
+      "detail": "Sign in to the Microsoft Entra admin center as at least Application Developer, in your company tenant. Entra ID > App registrations > New registration. Name: your appName (profile). Supported account types: 'Multiple Entra ID tenants' (organisations only; for business users on work accounts). Pick 'Any Entra ID Tenant + Personal Microsoft accounts' only if you also want Outlook.com users. Register, then record the Application (client) ID. The link opens App registrations in the Entra admin center; use New registration (sign-in redirect is normal).",
+      "url": "https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade",
       "estimate": "5 min",
       "fields": [
         {
@@ -143,7 +143,7 @@
       "title": "Add the Web redirect URIs",
       "who": "agent-then-you",
       "phase": "build",
-      "detail": "App registration > Authentication > Add Redirect URI > Web. Add your production callback from the profile's redirectUris (e.g. https://<your-app-domain>/api/oauth/microsoft/callback) and, for development, http://localhost:3000/api/oauth/microsoft/callback. Configure.",
+      "detail": "App registration > Authentication > Add Redirect URI > Web. Add your production callback from the profile's redirectUris (e.g. https://<your-app-domain>/api/oauth/microsoft/callback) and, for development, http://localhost:3000/api/oauth/microsoft/callback. Configure. Open the app from App registrations (https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade).",
       "estimate": "3 min",
       "fields": [
         {
@@ -156,26 +156,28 @@
         "sourceIds": [
           "s5"
         ]
-      }
+      },
+      "url": "https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade"
     },
     {
       "title": "Create a credential (secret now, certificate for production)",
       "who": "you",
       "phase": "build",
-      "detail": "Certificates & secrets. For development: Client secrets > New client secret; lifetime is capped at 24 months and Microsoft recommends under 12; copy the Value immediately (never shown again). For production Microsoft says not to use secrets: upload a certificate (.cer/.pem/.crt) and keep the private key in a vault, or use a federated credential. Put a calendar reminder before expiry either way.",
+      "detail": "Certificates & secrets. For development: Client secrets > New client secret; lifetime is capped at 24 months and Microsoft recommends under 12; copy the Value immediately (never shown again). For production Microsoft says not to use secrets: upload a certificate (.cer/.pem/.crt) and keep the private key in a vault, or use a federated credential. Put a calendar reminder before expiry either way. Open the app from App registrations.",
       "estimate": "5-20 min",
       "evidence": {
         "status": "sourced",
         "sourceIds": [
           "s3"
         ]
-      }
+      },
+      "url": "https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade"
     },
     {
       "title": "Add delegated Graph permissions",
       "who": "agent-then-you",
       "phase": "build",
-      "detail": "API permissions > Add a permission > Microsoft Graph > Delegated permissions: User.Read (default), offline_access, Mail.Read, Mail.Send, Calendars.ReadWrite. Request the same scopes in the authorization request (https://graph.microsoft.com/Mail.Read etc.). Do not add application permissions unless you need unattended access to every mailbox.",
+      "detail": "API permissions > Add a permission > Microsoft Graph > Delegated permissions: User.Read (default), offline_access, Mail.Read, Mail.Send, Calendars.ReadWrite. Request the same scopes in the authorization request (https://graph.microsoft.com/Mail.Read etc.). Do not add application permissions unless you need unattended access to every mailbox. Open the app from App registrations.",
       "estimate": "5 min",
       "evidence": {
         "status": "sourced",
@@ -183,13 +185,14 @@
           "s6",
           "s2"
         ]
-      }
+      },
+      "url": "https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade"
     },
     {
       "title": "Set branding and publisher domain",
       "who": "agent-then-you",
       "phase": "build",
-      "detail": "Branding & properties: logo, home page, terms and privacy URLs, and set the publisher domain to your company domain (requires it to be added and DNS-verified as a custom domain in the tenant; a TXT record).",
+      "detail": "Branding & properties: logo, home page, terms and privacy URLs, and set the publisher domain to your company domain (requires it to be added and DNS-verified as a custom domain in the tenant; a TXT record). Open the app from App registrations.",
       "estimate": "15 min + DNS propagation",
       "fields": [
         {
@@ -220,7 +223,8 @@
           "s8"
         ],
         "note": "Logo and URL field names not re-fetched; publisher-domain rule is sourced."
-      }
+      },
+      "url": "https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade"
     },
     {
       "title": "Get your first token in your own tenant",
@@ -267,7 +271,7 @@
       "title": "Mark the app publisher verified",
       "who": "you",
       "phase": "launch",
-      "detail": "Sign in with MFA as Application Administrator / Cloud Application Administrator who is also Partner Admin or Account Admin in Partner Center. App registrations > the app > Branding & properties > Add Partner ID to verify publisher > enter the Partner One ID of the partner global account (not a location ID) > Verify and save. The blue verified badge then shows on consent prompts.",
+      "detail": "Sign in with MFA as Application Administrator / Cloud Application Administrator who is also Partner Admin or Account Admin in Partner Center. App registrations > the app > Branding & properties > Add Partner ID to verify publisher > enter the Partner One ID of the partner global account (not a location ID) > Verify and save. The blue verified badge then shows on consent prompts. Open the app from App registrations.",
       "estimate": "10 min",
       "fields": [
         {
@@ -281,7 +285,8 @@
           "s8",
           "s4"
         ]
-      }
+      },
+      "url": "https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade"
     },
     {
       "title": "Onboard each customer: admin consent",
@@ -308,7 +313,8 @@
         "sourceIds": [
           "s10"
         ]
-      }
+      },
+      "url": "https://learn.microsoft.com/en-us/microsoft-365-app-certification/overview"
     }
   ],
   "scopes": [
@@ -557,6 +563,14 @@
       "kind": "our-test",
       "quote": "openid-configuration under /common/v2.0 (root paths 404); scopes_supported [openid, profile, email, offline_access]; no code_challenge_methods_supported field; no registration_endpoint",
       "accessed": "2026-10-30"
+    },
+    {
+      "id": "s13",
+      "title": "OAuth 2.0 authorization code flow - Microsoft identity platform",
+      "url": "https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-auth-code-flow",
+      "kind": "official-docs",
+      "quote": "This parameter is now recommended for all application types, both public and confidential clients",
+      "accessed": "2026-11-02"
     }
   ],
   "meta": {
@@ -622,5 +636,28 @@
         "note": "Entra's v2.0 discovery is found only under the tenant path, does not advertise PKCE methods (Entra supports S256 in practice, not shown here) and has no dynamic registration. Unknown client_id on /common/oauth2/v2.0/authorize returns HTTP 200 with an HTML error page."
       }
     ]
+  },
+  "oauth": {
+    "authType": "oauth2",
+    "authorizeUrl": "https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize",
+    "tokenUrl": "https://login.microsoftonline.com/organizations/oauth2/v2.0/token",
+    "pkce": "supported",
+    "clientAuth": "client_secret_post",
+    "scopeSeparator": " ",
+    "refreshTokens": "Yes, when offline_access is requested. Refresh tokens for web apps have no fixed lifetime (single-page apps: 24 hours).",
+    "testApiCall": {
+      "method": "GET",
+      "url": "https://graph.microsoft.com/v1.0/me",
+      "note": "Delegated User.Read; send Authorization: Bearer <access token>."
+    },
+    "dynamicRegistration": false,
+    "evidence": {
+      "status": "sourced",
+      "sourceIds": [
+        "s12",
+        "s13"
+      ],
+      "note": "The guide registers the app as 'Multiple Entra ID tenants' (work accounts only), so /organizations is used; replace it with /common if you also enable personal Microsoft accounts (the discovery document in s12 uses /common). Tenant-specific endpoints work for single-tenant apps. PKCE is recommended for all client types and required for SPAs. The discovery document lists client_secret_post, client_secret_basic and private_key_jwt for the token endpoint; the docs' example sends client_secret in the body. Graph scope names are accepted without the https://graph.microsoft.com/ prefix. No user-token revoke endpoint was found in the cited docs, so revokeUrl is omitted."
+    }
   }
 }

@@ -173,7 +173,7 @@
       "title": "Fill Basic Settings: URLs, icon, category, deletion",
       "who": "agent-then-you",
       "phase": "build",
-      "detail": "App settings > Basic: App domains, Privacy Policy URL, Terms of Service URL, User data deletion (instructions URL or callback URL), icon, category. An agent can prepare all values from the profile; a human pastes them in and saves.",
+      "detail": "App settings > Basic: App domains, Privacy Policy URL, Terms of Service URL, User data deletion (instructions URL or callback URL), icon, category. An agent can prepare all values from the profile; a human pastes them in and saves. Open your app from https://developers.facebook.com/apps/ > App settings > Basic.",
       "estimate": "10 min",
       "fields": [
         {
@@ -204,13 +204,14 @@
           "m4",
           "m6"
         ]
-      }
+      },
+      "url": "https://developers.facebook.com/apps/"
     },
     {
       "title": "Configure Facebook Login for Business and redirect URIs",
       "who": "agent-then-you",
       "phase": "build",
-      "detail": "Add the Facebook Login for Business product. Create a configuration (its config_id) listing only the assets and permissions you need. Set Valid OAuth Redirect URIs (HTTPS) and, for the JS SDK and Embedded Signup, Allowed Domains with Enforce HTTPS on.",
+      "detail": "Add the Facebook Login for Business product. Create a configuration (its config_id) listing only the assets and permissions you need. Set Valid OAuth Redirect URIs (HTTPS) and, for the JS SDK and Embedded Signup, Allowed Domains with Enforce HTTPS on. Open your app from https://developers.facebook.com/apps/, then Facebook Login for Business > Settings.",
       "estimate": "15 min",
       "fields": [
         {
@@ -229,13 +230,14 @@
           "m7",
           "m8"
         ]
-      }
+      },
+      "url": "https://developers.facebook.com/apps/"
     },
     {
       "title": "Test with your own assets under Standard Access",
       "who": "agent-then-you",
       "phase": "test",
-      "detail": "Log in as an app admin. Connect your own Page, IG professional account and WhatsApp test number, then call the Graph API: send a Messenger/IG reply, publish a test Page post, send a WhatsApp message. Add teammates as app testers; non-role users will fail.",
+      "detail": "Log in as an app admin. Connect your own Page, IG professional account and WhatsApp test number, then call the Graph API: send a Messenger/IG reply, publish a test Page post, send a WhatsApp message. Add teammates as app testers; non-role users will fail. Open your app from https://developers.facebook.com/apps/ for roles and tokens.",
       "estimate": "30-60 min",
       "evidence": {
         "status": "sourced",
@@ -243,13 +245,14 @@
           "m1",
           "m2"
         ]
-      }
+      },
+      "url": "https://developers.facebook.com/apps/"
     },
     {
       "title": "Complete Business Verification",
       "who": "you",
       "phase": "launch",
-      "detail": "Business portfolio > Security Center > Start verification. Enter the legal name, address, phone and website, and upload a registration or tax document if Meta can't match public records. Then confirm by email, phone or domain. The name must match the documents exactly.",
+      "detail": "Business portfolio > Security Center > Start verification. Enter the legal name, address, phone and website, and upload a registration or tax document if Meta can't match public records. Then confirm by email, phone or domain. The name must match the documents exactly. Opens Business Settings (sign-in redirect is normal); pick the business portfolio, then Security Center.",
       "estimate": "30 min hands-on; days to ~4 weeks wait",
       "fields": [
         {
@@ -268,7 +271,8 @@
           "m12"
         ],
         "note": "The wait time is not documented by Meta; the 4-week figure comes from third-party help centres (anecdotal)."
-      }
+      },
+      "url": "https://business.facebook.com/settings/security"
     },
     {
       "title": "Record one screencast per permission",
@@ -313,7 +317,7 @@
       "title": "WhatsApp: become a Tech Provider (Access Verification) and enable Embedded Signup",
       "who": "you",
       "phase": "launch",
-      "detail": "After Business Verification and approval of whatsapp_business_messaging + whatsapp_business_management, complete Access Verification in the WhatsApp dashboard (shown as about 5 business days). Until all three are done, Embedded Signup onboards at most 10 new business customers per rolling 7 days; after them, 200. Test onboarding with a business portfolio other than the one that owns the app.",
+      "detail": "After Business Verification and approval of whatsapp_business_messaging + whatsapp_business_management, complete Access Verification in the WhatsApp dashboard (shown as about 5 business days). Until all three are done, Embedded Signup onboards at most 10 new business customers per rolling 7 days; after them, 200. Test onboarding with a business portfolio other than the one that owns the app. Open your app from https://developers.facebook.com/apps/ and use the WhatsApp section of the dashboard.",
       "estimate": "30 min hands-on; ~5 business days stated, often longer",
       "evidence": {
         "status": "sourced",
@@ -323,13 +327,14 @@
           "m14",
           "m17"
         ]
-      }
+      },
+      "url": "https://developers.facebook.com/apps/"
     },
     {
       "title": "Switch the app to Live and have every Page reconnect",
       "who": "agent-then-you",
       "phase": "launch",
-      "detail": "Set App Mode to Live. Each client then has to go through Facebook Login for Business again so their Page/IG token carries the newly approved scopes. Old tokens keep failing on publish calls with Graph error 10 or 200-299 until they reconnect. An agent can detect missing scopes (debug_token) and prompt each customer.",
+      "detail": "Set App Mode to Live. Each client then has to go through Facebook Login for Business again so their Page/IG token carries the newly approved scopes. Old tokens keep failing on publish calls with Graph error 10 or 200-299 until they reconnect. An agent can detect missing scopes (debug_token) and prompt each customer. Open your app from https://developers.facebook.com/apps/ and flip App Mode in the top bar.",
       "estimate": "5 min + per-client reconnect",
       "evidence": {
         "status": "tested",
@@ -337,13 +342,14 @@
           "m17",
           "m2"
         ]
-      }
+      },
+      "url": "https://developers.facebook.com/apps/"
     },
     {
       "title": "Complete the annual Data Use Checkup",
       "who": "you",
       "phase": "launch",
-      "detail": "An app admin gets notified 60 days before the app's Data Use Checkup deadline. Review the permissions in use, answer the data-handling questions and certify compliance. Missing it risks losing API access. Keep admin contact details current.",
+      "detail": "An app admin gets notified 60 days before the app's Data Use Checkup deadline. Review the permissions in use, answer the data-handling questions and certify compliance. Missing it risks losing API access. Keep admin contact details current. Open your app from https://developers.facebook.com/apps/ for the Data Use Checkup notice.",
       "estimate": "30 min/year",
       "evidence": {
         "status": "sourced",
@@ -351,7 +357,8 @@
           "m9",
           "m10"
         ]
-      }
+      },
+      "url": "https://developers.facebook.com/apps/"
     }
   ],
   "scopes": [
@@ -703,6 +710,22 @@
       "kind": "our-test",
       "quote": "openid-configuration: response_types_supported [id_token, token id_token]; no token_endpoint, no code_challenge_methods_supported, no registration_endpoint",
       "accessed": "2026-10-30"
+    },
+    {
+      "id": "m19",
+      "title": "Manually Build a Login Flow",
+      "url": "https://developers.facebook.com/docs/facebook-login/guides/advanced/manual-flow",
+      "kind": "official-docs",
+      "quote": "A comma or space separated list of Permissions to request from the person using your app.",
+      "accessed": "2026-11-02"
+    },
+    {
+      "id": "m20",
+      "title": "Long-lived access tokens",
+      "url": "https://developers.facebook.com/docs/facebook-login/guides/access-tokens/get-long-lived",
+      "kind": "official-docs",
+      "quote": "Default User and Page access tokens are short-lived, expiring in hours, however, you can exchange a short-lived token for a long-lived token.",
+      "accessed": "2026-11-02"
     }
   ],
   "meta": {
@@ -762,5 +785,29 @@
         "note": "Facebook's OIDC discovery only describes Limited Login (implicit id_token); no PKCE methods advertised, no dynamic registration. /v21.0/dialog/oauth with an unknown client_id returns HTTP 200 with an HTML error page."
       }
     ]
+  },
+  "oauth": {
+    "authType": "oauth2",
+    "authorizeUrl": "https://www.facebook.com/dialog/oauth",
+    "tokenUrl": "https://graph.facebook.com/oauth/access_token",
+    "pkce": "unknown",
+    "clientAuth": "client_secret_post",
+    "scopeSeparator": ",",
+    "refreshTokens": "No refresh tokens. The code exchange returns a short-lived user token; exchange it (grant_type=fb_exchange_token) for a long-lived one of about 60 days, and have the user log in again after that.",
+    "testApiCall": {
+      "method": "GET",
+      "url": "https://graph.facebook.com/me?fields=id,name",
+      "note": "Pass the user access token as access_token. Page tokens are then fetched from /me/accounts."
+    },
+    "dynamicRegistration": false,
+    "evidence": {
+      "status": "sourced",
+      "sourceIds": [
+        "m18",
+        "m19",
+        "m20"
+      ],
+      "note": "The docs show a Graph version prefix (e.g. /v26.0/dialog/oauth, /v26.0/oauth/access_token); the unversioned URLs here are the same paths and the app's default version applies. The code exchange takes client_id, client_secret, redirect_uri and code as GET query parameters (closest to client_secret_post). Scope may be comma or space separated; comma is the documented default. Facebook Login for Business uses config_id instead of scope in the dialog URL. No PKCE flow is documented for the web flow, and there is no OAuth revoke endpoint (permissions are removed with DELETE /me/permissions), so revokeUrl is omitted."
+    }
   }
 }

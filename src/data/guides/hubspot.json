@@ -144,7 +144,8 @@
           "s4"
         ],
         "note": "npm package name is from general knowledge; the version requirement is sourced."
-      }
+      },
+      "url": "https://developers.hubspot.com/docs/apps/developer-platform/build-apps/create-an-app"
     },
     {
       "title": "Scaffold a Projects-based app",
@@ -159,7 +160,8 @@
           "s5",
           "s6"
         ]
-      }
+      },
+      "url": "https://developers.hubspot.com/docs/apps/developer-platform/build-apps/create-an-app"
     },
     {
       "title": "Configure app-hsmeta.json: uid, redirect URLs, scopes",
@@ -184,13 +186,14 @@
           "s4",
           "s7"
         ]
-      }
+      },
+      "url": "https://developers.hubspot.com/docs/apps/developer-platform/build-apps/create-an-app"
     },
     {
       "title": "Upload and build the project",
       "who": "agent",
       "phase": "build",
-      "detail": "hs project upload; each upload triggers a build. Copy the client ID and secret from the app's Auth page in the developer account.",
+      "detail": "hs project upload; each upload triggers a build. Copy the client ID and secret from the app's Auth page in the developer account. Open https://app.hubspot.com/developer/ (sign-in redirect is normal), choose the developer account, then open the project's app to find its Auth page.",
       "estimate": "5 min",
       "evidence": {
         "status": "sourced",
@@ -198,13 +201,14 @@
           "s4"
         ],
         "note": "Location of client ID/secret in the UI is inferred."
-      }
+      },
+      "url": "https://app.hubspot.com/developer/"
     },
     {
       "title": "Install into a test account and get a token",
       "who": "agent-then-you",
       "phase": "test",
-      "detail": "Open the install URL, choose the developer test account, approve. Exchange the code for access + refresh tokens and call the CRM contacts and deals endpoints using date-based API versions (not v1-v4, which lose certification after September 2027).",
+      "detail": "Open the install URL, choose the developer test account, approve. Exchange the code for access + refresh tokens and call the CRM contacts and deals endpoints using date-based API versions (not v1-v4, which lose certification after September 2027). The install URL is on the app's Auth page in the developer account (https://app.hubspot.com/developer/).",
       "estimate": "15-30 min",
       "evidence": {
         "status": "sourced",
@@ -212,7 +216,8 @@
           "s6"
         ],
         "note": "Install flow details inferred; API-version guidance sourced."
-      }
+      },
+      "url": "https://app.hubspot.com/developer/"
     },
     {
       "title": "Roll out to the first customers (up to 25)",
@@ -232,7 +237,7 @@
       "title": "Submit a Marketplace listing (to lift the 25-install cap)",
       "who": "agent-then-you",
       "phase": "launch",
-      "detail": "From the developer account create the listing: integration-specific description, setup docs URL, ToS/privacy URLs, support contact, scopes matching what the app actually uses, agree to the App Partner Program Agreement. Follow HubSpot branding rules (capital S in HubSpot; no 'Hub'/'HubSpot' in the app name or logo). Initial review within 10 business days; whole process up to 60 days.",
+      "detail": "From the developer account create the listing: integration-specific description, setup docs URL, ToS/privacy URLs, support contact, scopes matching what the app actually uses, agree to the App Partner Program Agreement. Follow HubSpot branding rules (capital S in HubSpot; no 'Hub'/'HubSpot' in the app name or logo). Initial review within 10 business days; whole process up to 60 days. Start from https://app.hubspot.com/developer/ in the developer account and open the app's listing section.",
       "estimate": "2-3 h hands-on",
       "fields": [
         {
@@ -261,7 +266,8 @@
         "sourceIds": [
           "s2"
         ]
-      }
+      },
+      "url": "https://app.hubspot.com/developer/"
     },
     {
       "title": "Optional: apply for app certification",
@@ -274,7 +280,8 @@
         "sourceIds": [
           "s3"
         ]
-      }
+      },
+      "url": "https://developers.hubspot.com/docs/apps/developer-platform/list-apps/apply-for-certification/certification-requirements"
     }
   ],
   "scopes": [
@@ -327,7 +334,7 @@
       "name": "oauth",
       "purpose": "Base OAuth scope",
       "tier": "basic",
-      "note": "Added by default to all apps; do not list it yourself.",
+      "note": "Added by default to all apps; do not list it yourself or put it in the authorize URL's scope parameter.",
       "evidence": {
         "status": "sourced",
         "sourceIds": [
@@ -502,6 +509,14 @@
       "kind": "our-test",
       "quote": "code_challenge_methods_supported: [S256]; response_types: [code]; no registration_endpoint; no openid-configuration (404)",
       "accessed": "2026-10-30"
+    },
+    {
+      "id": "s11",
+      "title": "Manage OAuth access tokens using the v3 APIs",
+      "url": "https://developers.hubspot.com/docs/api-reference/auth-oauth-v3/guide",
+      "kind": "official-docs",
+      "quote": "Access tokens are short-lived (30 minutes)",
+      "accessed": "2026-11-02"
     }
   ],
   "meta": {
@@ -561,5 +576,28 @@
         "note": "HubSpot publishes RFC 8414 metadata: PKCE S256 only, code flow only, no dynamic client registration, no OIDC. Unknown client_id on /oauth/authorize returns HTTP 200 with the OAuth UI page (error rendered client-side)."
       }
     ]
+  },
+  "oauth": {
+    "authType": "oauth2",
+    "authorizeUrl": "https://app.hubspot.com/oauth/authorize",
+    "tokenUrl": "https://api.hubapi.com/oauth/v3/token",
+    "pkce": "supported",
+    "clientAuth": "client_secret_post",
+    "scopeSeparator": " ",
+    "refreshTokens": "Yes. Access tokens last 30 minutes (expires_in 1800); the refresh token is issued with the first exchange and used with grant_type=refresh_token to get new access tokens.",
+    "testApiCall": {
+      "method": "GET",
+      "url": "https://api.hubapi.com/crm/v3/objects/contacts?limit=1",
+      "note": "Needs crm.objects.contacts.read. HubSpot's metadata-style identity call (POST /oauth/v3/token/introspect) needs the client secret, so a CRM read is the cheapest bearer-token proof."
+    },
+    "dynamicRegistration": false,
+    "evidence": {
+      "status": "sourced",
+      "sourceIds": [
+        "s10",
+        "s11"
+      ],
+      "note": "Authorize URL and the v3 token endpoint (URL-form-encoded POST with client_id and client_secret in the body) are from HubSpot's v3 OAuth guide; the older /oauth/v1/token still appears in HubSpot's own discovery document (s10). PKCE: the discovery document advertises S256 only; the docs do not describe a PKCE flow, so treat it as supported but undocumented. Scopes are space-separated; optional_scope is a separate parameter. The CRM test call is not from a cited page; it relies on the contacts scope listed in this guide. No documented RFC 7009 revoke endpoint was found, so revokeUrl is omitted."
+    }
   }
 }
